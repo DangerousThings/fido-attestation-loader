@@ -21,11 +21,9 @@ if __name__ == '__main__':
         if(args.verb == 'create'):
             cert.create_cert(args)
         elif(args.verb == 'show'):
-            print('Not implemented')
-            exit(1)
+            cert.show_cert(args)
         elif(args.verb == 'validate'):
-            print('Not implemented')
-            exit(1)
+            cert.validate_cert(args)
         elif(args.verb == 'upload'):
             print('Not implemented')
             exit(1)

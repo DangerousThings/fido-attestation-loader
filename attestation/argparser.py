@@ -85,7 +85,7 @@ def parse():
 
     # CERT VAL action
     parser_cert_validate = subparsers_cert.add_parser('validate', 
-        parents=[parser_handle_cert_pkey, parser_handle_ca], 
+        parents=[parser_handle_cert, parser_handle_ca], 
         help='validate an existing attestation certificate against a certificate authority')
 
     # CERT UPLOAD action
@@ -116,23 +116,30 @@ def validate(args):
         elif(args.verb == 'upload'):
             print('info: Uploading a public attestation certificate to a hardware token')
 
-    if(args.action == 'cert' and args.verb == 'create'):
-        if(os.path.isfile(args.certfile) and (not args.overwrite)):
-            print('error: Public attestation certificate file \'' + args.certfile + 
-                '\' already exists. Run with \'-o\' to enable overwriting files.')
-            exit(1)
-        if(os.path.isfile(args.privkeyfile) and (not args.overwrite)):
-            print('error: Private attestation key file \'' + args.privkeyfile + 
-                '\' already exists. Run with \'-o\' to enable overwriting files.')
-            exit(1)
-        if(args.privkeypassphrase is None):
-            pw1 = getpass.getpass('prompt: No passphrase to encrypt the private attestation key specified, please create one: ')
-            pw2 = getpass.getpass('prompt: Re-type passphrase for confirmation: ')
-            if(pw1 == pw2):
-                args.privkeypassphrase = pw1
-            else:
-                print('error: Passphrases do not match.')
+    if(args.action == 'cert'):
+        if(args.verb == 'create'):
+            if(os.path.isfile(args.certfile) and (not args.overwrite)):
+                print('error: Public attestation certificate file \'' + args.certfile + 
+                    '\' already exists. Run with \'-o\' to enable overwriting files.')
                 exit(1)
+            if(os.path.isfile(args.privkeyfile) and (not args.overwrite)):
+                print('error: Private attestation key file \'' + args.privkeyfile + 
+                    '\' already exists. Run with \'-o\' to enable overwriting files.')
+                exit(1)
+        if(args.verb == 'create' or args.verb == 'show'):
+            if(args.privkeypassphrase is None):
+                if(args.verb == 'create'):
+                    pw1 = getpass.getpass('prompt: No passphrase to encrypt the private attestation key specified, ' + 
+                        'please create passphrase: ')
+                    pw2 = getpass.getpass('prompt: Re-type passphrase for confirmation: ')
+                    if(pw1 == pw2):
+                        args.privkeypassphrase = pw1
+                    else:
+                        print('error: Passphrases do not match.')
+                        exit(1)
+                else:
+                    args.privkeypassphrase = getpass.getpass('prompt: No passphrase to decrypt the private attestation ' + 
+                        'key specified, please enter passphrase: ')
 
     if(args.action == 'ca'):
         if(os.path.isfile(args.cacertfile) and (not args.overwrite)):
@@ -146,8 +153,9 @@ def validate(args):
 
     if((args.action == 'cert' and args.verb == 'create') or args.action == 'ca'):
         if(args.caprivkeypassphrase is None):
-            pw1 = getpass.getpass('prompt: No passphrase to de/encrypt the certificate authority private key specified, please enter it: ')
             if(args.action == 'ca'):
+                pw1 = getpass.getpass('prompt: No passphrase to encrypt the certificate authority private key specified, ' + 
+                    'please create passphrase: ')
                 pw2 = getpass.getpass('prompt: Re-type passphrase for confirmation: ')
                 if(pw1 == pw2):
                     args.caprivkeypassphrase = pw1
@@ -155,7 +163,8 @@ def validate(args):
                     print('error: Passphrases do not match.')
                     exit(1)
             else:
-                args.caprivkeypassphrase = pw1
+                args.caprivkeypassphrase = pw1 = getpass.getpass('prompt: No passphrase to decrypt the certificate authority ' + 
+                    'private key specified, please enter passphrase: ')
 
         if(args.days < 1):
             print('error: Certificate validity duration must be at least 1 day.')

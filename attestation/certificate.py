@@ -1,8 +1,10 @@
 import sys, os.path, argparse, getpass, datetime
 from cryptography.hazmat.primitives import hashes, serialization as ser
-from cryptography.hazmat.primitives.asymmetric import ec
+from cryptography.hazmat.primitives.asymmetric import ec, padding
 from cryptography import x509
 from cryptography.x509.oid import NameOID, ExtendedKeyUsageOID
+from cryptography.exceptions import InvalidSignature
+import asn1
 
 # FIDO U2F certificate transports extension
 # ASN1.BITSTRING (type 3) format, length 2, 4 unused bits, 3rd bit (= NFC) set (inverse bit order)
@@ -119,3 +121,43 @@ def create_cert(args):
 
     __print_info(ca, 'certificate authority')
     __store_public(cert, args.certfile, 'attestation certificate')
+
+def show_cert(args):
+    with open(args.certfile, 'rb') as f:
+        cert_der = f.read()
+    with open(args.privkeyfile, 'rb') as f:
+        try:
+            priv_key_der = ser.load_der_private_key(f.read(), 
+                password = args.privkeypassphrase.encode('utf-8')).private_bytes(
+                    ser.Encoding.DER, ser.PrivateFormat.TraditionalOpenSSL, ser.NoEncryption())
+        except ValueError as e:
+            print('error: Cannot read private attestation certificate key: ' + str(e))
+            exit(1)
+
+    # Extract the DER / ASN1 PKCS#1 encoded private key bytes
+    decoder = asn1.Decoder()
+    decoder.start(priv_key_der)
+    decoder.enter() # SEQUENCE
+    decoder.read() # ecPrivkeyVer1
+    tag, priv_key_bytes = decoder.read() # privateKey
+
+    __print_info(x509.load_der_x509_certificate(cert_der), 'attestation certificate')
+    print('info: Public attestation certificate bytes (length = 0x' + f'{len(cert_der):x}' + '):')
+    print(cert_der.hex())
+    print('info: Private attestation key bytes (length = 0x' + f'{len(priv_key_bytes):x}' + '):')
+    print(priv_key_bytes.hex())
+
+def validate_cert(args):
+    with open(args.certfile, 'rb') as f:
+        cert = x509.load_der_x509_certificate(f.read())
+    __print_info(cert, 'attestation certificate')
+    with open(args.cacertfile, 'rb') as f:
+        ca = x509.load_der_x509_certificate(f.read())
+    __print_info(ca, 'certificate authority')
+
+    try:
+        ca.public_key().verify(cert.signature, cert.tbs_certificate_bytes, ec.ECDSA(hashes.SHA256()))
+        print('success: The attestation certificate has a valid signature by the certificate authority')
+    except InvalidSignature as e:
+        print('error: the attestation certificate does not have a valid signature by the certificate authority')
+        exit(1)
