@@ -2,15 +2,15 @@
 
 import attestation.argparser as arg
 import attestation.certificate as cert
+import attestation.loader as load
+
 
 if __name__ == '__main__':
-    args = arg.parse()
-    arg.validate(args)
+    parser, args = arg.parse()
+    arg.validate(parser, args)
 
     if(args.listreaders):
-        print('Not implemented')
-        exit(1)
-
+        load.list_readers()
     if(args.action == 'ca'):
         if(args.verb == 'create'):
             cert.create_ca(args)
@@ -22,5 +22,4 @@ if __name__ == '__main__':
         elif(args.verb == 'validate'):
             cert.validate_cert(args)
         elif(args.verb == 'upload'):
-            print('Not implemented')
-            exit(1)
+            load.upload_cert(args)

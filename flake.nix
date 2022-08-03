@@ -17,6 +17,7 @@
             (python3.withPackages (ps: with ps; [
               cryptography
               asn1
+              pyscard
             ]))
           ];
         };

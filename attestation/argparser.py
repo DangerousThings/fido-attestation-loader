@@ -1,4 +1,5 @@
-import os, argparse, getpass, textwrap
+import os, argparse, getpass
+
 
 def parse():
     parser = argparse.ArgumentParser(description = 'Manage attestation certificates and certificate authorities')
@@ -6,7 +7,7 @@ def parse():
     parser.add_argument('-l', '--list-readers', action='store_true', dest='listreaders', 
         help='list available PC/SC readers')
         
-    actions = parser.add_subparsers(help='desired action to perform', dest='action', required=True) 
+    actions = parser.add_subparsers(help='desired action to perform', dest='action') 
 
     # Attestation certificate
     parser_handle_cert = argparse.ArgumentParser(add_help=False)
@@ -47,8 +48,9 @@ def parse():
 
     # Interfacing options
     parser_handle_load = argparse.ArgumentParser(add_help=False)
-    parser_handle_load.add_argument('-r', '--reader', nargs='?', dest='reader', type=str, 
-        required=True, help='name of the PC/SC reader to use')
+    parser_handle_load.add_argument('-r', '--reader', nargs='?', dest='reader', type=int, 
+        const=0, default=0, 
+        required=False, help='index of the PC/SC reader to use (default: 0)')
 
     # CA action
     parser_ca = actions.add_parser('ca', help='manage certificate authorities')
@@ -89,12 +91,16 @@ def parse():
         help='upload an existing public attestation certificate to a hardware token')
 
     args = parser.parse_args()
-    return args
+    return (parser, args)
 
 
-def validate(args):
+def validate(parser, args):
     if(args.listreaders):
         return
+
+    if(args.action is None):
+        parser.print_help()
+        exit(1)
 
     if(args.action == 'ca'):
         if(args.verb == 'create'):
