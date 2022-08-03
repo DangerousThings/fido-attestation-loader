@@ -12,13 +12,20 @@ if __name__ == '__main__':
         exit(1)
 
     if(args.action == 'ca'):
-        pass
+        if(args.verb == 'create'):
+            cert.create_ca(args)
+        elif(args.verb == 'renew'):
+            print('Not implemented')
+            exit(1)
     elif(args.action == 'cert'):
         if(args.verb == 'create'):
-            cert.create(args)
+            cert.create_cert(args)
         elif(args.verb == 'show'):
-            pass
+            print('Not implemented')
+            exit(1)
         elif(args.verb == 'validate'):
-            pass
+            print('Not implemented')
+            exit(1)
         elif(args.verb == 'upload'):
-            pass
+            print('Not implemented')
+            exit(1)

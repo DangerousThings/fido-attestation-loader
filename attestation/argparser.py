@@ -25,13 +25,13 @@ def parse():
     # CA certificate
     parser_handle_ca = argparse.ArgumentParser(add_help=False)
     parser_handle_ca.add_argument('-cac', '--certificate-authority', nargs='?', 
-        dest='cacertfile', type=str, const='ca.pem', default='ca.pem', 
-        help='filename of the public certificate authority certificate (default: ca.pem)')
+        dest='cacertfile', type=str, const='ca.der', default='ca.der', 
+        help='filename of the public certificate authority certificate (default: ca.der)')
 
     parser_handle_ca_pkey = argparse.ArgumentParser(add_help=False)
     parser_handle_ca_pkey.add_argument('-cak', '--certificate-authority-key', 
-        nargs='?', dest='caprivkeyfile', type=str, const='ca_key.p8', default='ca.p8', 
-        help='filename of the private certificate authority key (default: ca.p8)')
+        nargs='?', dest='caprivkeyfile', type=str, const='ca_key.p8', default='ca_key.p8', 
+        help='filename of the private certificate authority key (default: ca_key.p8)')
     parser_handle_ca_pkey.add_argument('-cap', '--certificate-authority-key-passphrase', 
         nargs='?', dest='caprivkeypassphrase', type=str,
         help='passphrase to de/encrypt the private certificate authority key')
@@ -39,8 +39,8 @@ def parse():
     # Generation options
     parser_handle_create = argparse.ArgumentParser(add_help=False)
     parser_handle_create.add_argument('-d', '--days', nargs='?', dest='days', type=int, 
-        const=365, default=365, 
-        help='certificate authority validity duration in days (default: 365)')
+        const=3652, default=3652, 
+        help='certificate authority validity duration in days (default: 3652 = 10 years)')
     parser_handle_create.add_argument('-o', '--overwrite', dest='overwrite', type=bool, 
         default=False, action = argparse.BooleanOptionalAction,
         help='allow overwriting existing files')
@@ -51,34 +51,45 @@ def parse():
         required=True, help='name of the PC/SC reader to use')
 
     # CA action
-    parser_ca = actions.add_parser('ca', 
+    parser_ca = actions.add_parser('ca', help='manage certificate authorities')
+    subparsers_ca = parser_ca.add_subparsers(
+        help='desired action to perform on a certificate authority', 
+        dest='verb', required=True) 
+    
+    # CA CREATE action
+    parser_ca_create = subparsers_ca.add_parser('create', 
         parents=[parser_handle_ca, parser_handle_ca_pkey, parser_handle_create], 
         help='create a new certificate authority')
 
+    # CA RENEW action
+    parser_ca_renew = subparsers_ca.add_parser('renew', 
+        parents=[parser_handle_ca, parser_handle_ca_pkey, parser_handle_create], 
+        help='renew an existing certificate authority')
+
     # CERT action
     parser_cert = actions.add_parser('cert', help='manage attestation certificates')
-    subparsers_cert_att = parser_cert.add_subparsers(
+    subparsers_cert = parser_cert.add_subparsers(
         help='desired action to perform on an attestation certificate', 
         dest='verb', required=True) 
 
-    # CERT GEN action
-    parser_cert_create = subparsers_cert_att.add_parser('create', 
+    # CERT CREATE action
+    parser_cert_create = subparsers_cert.add_parser('create', 
         parents=[parser_handle_cert, parser_handle_cert_pkey, 
             parser_handle_ca, parser_handle_ca_pkey, parser_handle_create], 
         help='create a new attestation certificate')
     
     # CERT SHOW action
-    parser_cert_show = subparsers_cert_att.add_parser('show', 
+    parser_cert_show = subparsers_cert.add_parser('show', 
         parents=[parser_handle_cert, parser_handle_cert_pkey], 
         help='show details of an existing attestation certificate')
 
     # CERT VAL action
-    parser_cert_validate = subparsers_cert_att.add_parser('validate', 
+    parser_cert_validate = subparsers_cert.add_parser('validate', 
         parents=[parser_handle_cert_pkey, parser_handle_ca], 
         help='validate an existing attestation certificate against a certificate authority')
 
     # CERT UPLOAD action
-    parser_cert_validate = subparsers_cert_att.add_parser('upload', 
+    parser_cert_validate = subparsers_cert.add_parser('upload', 
         parents=[parser_handle_cert, parser_handle_load], 
         help='upload an existing public attestation certificate to a hardware token')
 
@@ -91,7 +102,10 @@ def validate(args):
         return
 
     if(args.action == 'ca'):
-        print('info: Creating a new certificate authority')
+        if(args.verb == 'create'):
+            print('info: Creating a new certificate authority')
+        elif(args.verb == 'renew'):
+            print('info: Renewing an existing certificate authority')
     elif(args.action == 'cert'):
         if(args.verb == 'create'):
             print('info: Creating a new attestation certificate')
@@ -132,10 +146,7 @@ def validate(args):
 
     if((args.action == 'cert' and args.verb == 'create') or args.action == 'ca'):
         if(args.caprivkeypassphrase is None):
-            if(args.action == 'cert'):
-                pw1 = getpass.getpass('prompt: No passphrase to decrypt the certificate authority private key specified, please enter it: ')
-            else:
-                pw1 = getpass.getpass('prompt: No passphrase to encrypt the certificate authority private key specified, please create one: ')
+            pw1 = getpass.getpass('prompt: No passphrase to de/encrypt the certificate authority private key specified, please enter it: ')
             if(args.action == 'ca'):
                 pw2 = getpass.getpass('prompt: Re-type passphrase for confirmation: ')
                 if(pw1 == pw2):
