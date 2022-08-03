@@ -13,13 +13,13 @@ fidoTransportExtension = x509.UnrecognizedExtension(
     x509.ObjectIdentifier('1.3.6.1.4.1.45724.2.1.1'), b'\x03\x02\x04\x10')
 
 
-def __create_private_key(passphrase, curve, file):
+def __create_private_key(passphrase, curve, name, file):
     # Generate and store private key
     priv_key = ec.generate_private_key(curve)
     priv_key_der = priv_key.private_bytes(ser.Encoding.DER, ser.PrivateFormat.PKCS8, 
         ser.BestAvailableEncryption(passphrase.encode('utf-8')))
     with open(file, 'wb') as f: f.write(priv_key_der)
-    print('success: Wrote private certificate authority key file \'' + file + '\'')
+    print('success: Wrote private ' + name + ' key file \'' + file + '\'')
     return priv_key
 
 
@@ -27,7 +27,7 @@ def __store_public(cert, file, name):
     cert_print_info(cert, name)
     with open(file, 'wb') as f:
         f.write(cert.public_bytes(ser.Encoding.DER))
-    print('success: Wrote public attestation certificate file \'' + file + '\'')
+    print('success: Wrote public ' + name + ' file \'' + file + '\'')
 
 
 def cert_print_info(cert, name):
@@ -38,7 +38,7 @@ def cert_print_info(cert, name):
 
 def create_ca(args):
     priv_key = __create_private_key(args.caprivkeypassphrase, 
-        ec.SECP384R1(), args.caprivkeyfile)
+        ec.SECP384R1(), 'certificate authority', args.caprivkeyfile)
 
     # Self-sign CA
     subject = issuer = x509.Name([
@@ -74,7 +74,7 @@ def create_ca(args):
 
 def create_cert(args):
     priv_key_cert = __create_private_key(args.privkeypassphrase, 
-        ec.SECP256R1(), args.privkeyfile)
+        ec.SECP256R1(), 'attestation certificate', args.privkeyfile)
 
     # Generate CSR
     csr = x509.CertificateSigningRequestBuilder().subject_name(
