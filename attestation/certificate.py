@@ -139,10 +139,12 @@ def show_cert(args):
     decoder.read() # ecPrivkeyVer1
     tag, priv_key_bytes = decoder.read() # privateKey
 
-    cert_print_info(x509.load_der_x509_certificate(cert_der), 'attestation certificate')
-    print('info: Public attestation certificate ' + str(len(cert_der))  + ' bytes:')
-    print(cert_der.hex())
-    print('info: Applet installation parameter (contains private attestation key ' + str(len(priv_key_bytes)) + ' bytes):')
+    if(not args.installonly):
+        cert_print_info(x509.load_der_x509_certificate(cert_der), 'attestation certificate')
+        print('info: Public attestation certificate ' + str(len(cert_der))  + ' bytes:')
+        print(cert_der.hex())
+        print('info: Applet installation parameter (contains private attestation key ' + str(len(priv_key_bytes)) + ' bytes):')
+    
     print('00' + f'{len(cert_der):04x}'+ priv_key_bytes.hex())
 
 

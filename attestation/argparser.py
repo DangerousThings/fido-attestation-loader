@@ -79,6 +79,9 @@ def parse():
     parser_cert_show = subparsers_cert.add_parser('show', 
         parents=[parser_handle_cert, parser_handle_cert_pkey], 
         help='show details of an existing attestation certificate')
+    parser_cert_show.add_argument('-ao', '--applet-install-only', dest='installonly', type=bool, 
+        default=False, action = argparse.BooleanOptionalAction,
+        help='show only applet installation parameter')
 
     # CERT VAL action
     parser_cert_validate = subparsers_cert.add_parser('validate', 
@@ -108,7 +111,7 @@ def validate(parser, args):
     elif(args.action == 'cert'):
         if(args.verb == 'create'):
             print('info: Creating a new attestation certificate')
-        elif(args.verb == 'show'):
+        elif(args.verb == 'show' and not args.installonly):
             print('info: Showing an existing attestation certificate')
         elif(args.verb == 'validate'):
             print('info: Validating an existing attestation certificate against a certificate authority')
