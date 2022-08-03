@@ -51,4 +51,5 @@ def upload_cert(args):
             print('success: Data chunk transferred, card response is ok')
         else:
             print('error: Card response: ' + f'{sw1:02x}' + ' ' + f'{sw2:02x}, aborting upload')
-            exit(1)
+            break
+    connection.disconnect()
