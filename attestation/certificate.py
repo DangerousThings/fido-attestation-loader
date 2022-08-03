@@ -156,6 +156,7 @@ def validate_cert(args):
     __print_info(ca, 'certificate authority')
 
     try:
+        # Use ECDSA for verifying
         ca.public_key().verify(cert.signature, cert.tbs_certificate_bytes, ec.ECDSA(hashes.SHA256()))
         print('success: The attestation certificate has a valid signature by the certificate authority')
     except InvalidSignature as e:

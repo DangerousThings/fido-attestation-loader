@@ -61,11 +61,6 @@ def parse():
         parents=[parser_handle_ca, parser_handle_ca_pkey, parser_handle_create], 
         help='create a new certificate authority')
 
-    # CA RENEW action
-    parser_ca_renew = subparsers_ca.add_parser('renew', 
-        parents=[parser_handle_ca, parser_handle_ca_pkey, parser_handle_create], 
-        help='renew an existing certificate authority')
-
     # CERT action
     parser_cert = actions.add_parser('cert', help='manage attestation certificates')
     subparsers_cert = parser_cert.add_subparsers(
@@ -104,8 +99,6 @@ def validate(args):
     if(args.action == 'ca'):
         if(args.verb == 'create'):
             print('info: Creating a new certificate authority')
-        elif(args.verb == 'renew'):
-            print('info: Renewing an existing certificate authority')
     elif(args.action == 'cert'):
         if(args.verb == 'create'):
             print('info: Creating a new attestation certificate')

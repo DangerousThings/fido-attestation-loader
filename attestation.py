@@ -14,9 +14,6 @@ if __name__ == '__main__':
     if(args.action == 'ca'):
         if(args.verb == 'create'):
             cert.create_ca(args)
-        elif(args.verb == 'renew'):
-            print('Not implemented')
-            exit(1)
     elif(args.action == 'cert'):
         if(args.verb == 'create'):
             cert.create_cert(args)
