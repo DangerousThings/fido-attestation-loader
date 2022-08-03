@@ -39,6 +39,7 @@ def upload_cert(args):
         print('success: Applet selected, card response is ok')
     else:
         print('error: Card response: ' + f'{sw1:02x}' + ' ' + f'{sw2:02x}, aborting upload')
+        connection.disconnect()
         exit(1)
     # Send the certificate in chunks
     for offset in range(0, len(cert_der), 128):
@@ -51,5 +52,6 @@ def upload_cert(args):
             print('success: Data chunk transferred, card response is ok')
         else:
             print('error: Card response: ' + f'{sw1:02x}' + ' ' + f'{sw2:02x}, aborting upload')
-            break
+            connection.disconnect()
+            exit(1)
     connection.disconnect()
