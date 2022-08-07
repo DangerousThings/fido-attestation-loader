@@ -46,6 +46,12 @@ def parse():
         default=False, action = argparse.BooleanOptionalAction,
         help='allow overwriting existing files')
 
+    # Mode options
+    parser_handle_mode = argparse.ArgumentParser(add_help=False)
+    parser_handle_mode.add_argument('-v', '--variant', nargs='?', dest='variant', type=str,
+        const='u2f', default='u2f', choices=['u2f', 'u2fci', 'fido2'], 
+        help='Certificate variant to handle')
+
     # Interfacing options
     parser_handle_load = argparse.ArgumentParser(add_help=False)
     parser_handle_load.add_argument('-r', '--reader', nargs='?', dest='reader', type=int, 
@@ -71,13 +77,13 @@ def parse():
 
     # CERT CREATE action
     parser_cert_create = subparsers_cert.add_parser('create', 
-        parents=[parser_handle_cert, parser_handle_cert_pkey, 
+        parents=[parser_handle_cert, parser_handle_cert_pkey, parser_handle_mode,
             parser_handle_ca, parser_handle_ca_pkey, parser_handle_create], 
         help='create a new attestation certificate')
     
     # CERT SHOW action
     parser_cert_show = subparsers_cert.add_parser('show', 
-        parents=[parser_handle_cert, parser_handle_cert_pkey], 
+        parents=[parser_handle_cert, parser_handle_cert_pkey, parser_handle_mode], 
         help='show details of an existing attestation certificate')
     parser_cert_show.add_argument('-ao', '--applet-install-only', dest='installonly', type=bool, 
         default=False, action = argparse.BooleanOptionalAction,

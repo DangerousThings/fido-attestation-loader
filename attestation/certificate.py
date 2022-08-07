@@ -145,7 +145,9 @@ def show_cert(args):
         print(cert_der.hex())
         print('info: Applet installation parameter (contains private attestation key ' + str(len(priv_key_bytes)) + ' bytes):')
     
-    print('00' + f'{len(cert_der):04x}'+ priv_key_bytes.hex())
+    flags = '00'
+    if(args.variant == 'u2fci'): flags = '01'
+    print(flags + f'{len(cert_der):04x}'+ priv_key_bytes.hex())
 
 
 def validate_cert(args):
