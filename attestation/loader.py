@@ -62,7 +62,7 @@ def upload_cert(args):
         for offset in range(0, len(cert_der), 255):
             length = min(255, len(cert_der) - offset)
             cla = 0x80
-            if(len(cert_der) - offset <= 255): cla |= 0x10
+            if(len(cert_der) - offset > 255): cla |= 0x10
             print('info: Sending data chunk, offset = ' + str(offset) + ', length = ' + str(length))
             data, sw1, sw2 = connection.transmit([cla, 0x10, 0x00, 0x00, length] + 
                 cert_der[offset:(offset + length)])

@@ -30,11 +30,13 @@ def parse(file):
 
     return AttConfig(
         caName = x509.Name([
+            x509.NameAttribute(NameOID.COUNTRY_NAME, config.get('ca', 'C', fallback='US')),
             x509.NameAttribute(NameOID.ORGANIZATION_NAME, config.get('ca', 'O', fallback='Attestation')),
             x509.NameAttribute(NameOID.ORGANIZATIONAL_UNIT_NAME, config.get('ca', 'OU', fallback='Authenticator Attestation')),
             x509.NameAttribute(NameOID.COMMON_NAME, config.get('ca', 'CN', fallback='Attestation Root CA'))
         ]),
         certName = x509.Name([
+            x509.NameAttribute(NameOID.COUNTRY_NAME, config.get('cert', 'C', fallback='US')),
             x509.NameAttribute(NameOID.ORGANIZATION_NAME, config.get('cert', 'O', fallback='Attestation')),
             x509.NameAttribute(NameOID.ORGANIZATIONAL_UNIT_NAME, config.get('cert', 'OU', fallback='Authenticator Attestation')),
             x509.NameAttribute(NameOID.COMMON_NAME, config.get('cert', 'CN', fallback='Attestation Token'))

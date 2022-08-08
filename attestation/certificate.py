@@ -141,8 +141,9 @@ def show_cert(args):
         print(cert_der.hex())
 
     if(args.mode == 'u2f' or args.mode == 'u2fci'):
-        print('info: Applet installation parameter (contains private attestation key ' + 
-            str(len(priv_key_bytes)) + ' bytes):')
+        if(not args.installonly):
+            print('info: Applet installation parameter (contains private attestation key ' + 
+                str(len(priv_key_bytes)) + ' bytes):')
         flags = '00'
         if(args.mode == 'u2fci'): flags = '01'
         print(flags + f'{len(cert_der):04x}'+ priv_key_bytes.hex())
@@ -150,8 +151,9 @@ def show_cert(args):
         decoder = asn1.Decoder()
         decoder.start(cert.extensions.get_extension_for_oid(fidoAAGUIDExtensionOID).value.value)
         tag, aaguid_bytes = decoder.read()
-        print('info: Applet installation parameter (contains private attestation key ' + 
-            str(len(priv_key_bytes)) + ' bytes, AAGUID ' + str(len(aaguid_bytes)) +' bytes):')
+        if(not args.installonly):
+            print('info: Applet installation parameter (contains private attestation key ' + 
+                str(len(priv_key_bytes)) + ' bytes, AAGUID ' + str(len(aaguid_bytes)) +' bytes):')
         print('00' + f'{len(cert_der):04x}' + priv_key_bytes.hex() + aaguid_bytes.hex())
 
 

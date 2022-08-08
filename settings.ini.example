@@ -1,9 +1,11 @@
 [ca]
+C=US
 O=Attestation
 OU=Authenticator Attestation
 CN=Attestation Root CA
 
 [cert]
+C=US
 O=Attestation
 OU=Authenticator Attestation
 CN=Attestation Token
