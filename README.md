@@ -1,6 +1,6 @@
 # fido-attestation-loader
 
-Tool to generate and load U2F and FIDO2 attestation certificates to vk-u2f (wip) and u2f-javacard (done)
+Tool to generate and load U2F and FIDO2 attestation certificates to vk-u2f and u2f-javacard
 
 For usage, see the CLI help.
 
