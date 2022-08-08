@@ -12,6 +12,8 @@ import asn1
 fidoTransportExtension = x509.UnrecognizedExtension(
     x509.ObjectIdentifier('1.3.6.1.4.1.45724.2.1.1'), b'\x03\x02\x04\x10')
 
+# FIDO2 AAGUID extension
+fidoAAGUIDExtensionOID = x509.ObjectIdentifier('1.3.6.1.4.1.45724.1.1.4')
 
 def __create_private_key(passphrase, curve, name, file):
     # Generate and store private key
@@ -36,16 +38,12 @@ def cert_print_info(cert, name):
     print('info: Public ' + name + ' SHA256 fingerprint: ' + fingerprint.hex())
 
 
-def create_ca(args):
+def create_ca(args, conf):
     priv_key = __create_private_key(args.caprivkeypassphrase, 
         ec.SECP384R1(), 'certificate authority', args.caprivkeyfile)
 
     # Self-sign CA
-    subject = issuer = x509.Name([
-        x509.NameAttribute(NameOID.ORGANIZATION_NAME, u'FlexSecure'),
-        x509.NameAttribute(NameOID.ORGANIZATIONAL_UNIT_NAME, u'Authenticator Attestation'),
-        x509.NameAttribute(NameOID.COMMON_NAME, u'FlexSecure U2F Root CA'),
-    ])
+    subject = issuer = conf.caName
     cert = x509.CertificateBuilder().subject_name(
         subject
     ).issuer_name(
@@ -59,8 +57,7 @@ def create_ca(args):
     ).not_valid_after(
         datetime.datetime.utcnow() + datetime.timedelta(days = args.days)
     ).add_extension(
-        x509.BasicConstraints(ca = True, path_length = 0), 
-        critical = True
+        x509.BasicConstraints(ca = True, path_length = 0), critical = True
     ).add_extension(
         x509.KeyUsage(key_cert_sign = True, crl_sign = True,
             digital_signature = False, content_commitment = False, 
@@ -72,18 +69,13 @@ def create_ca(args):
     __store_public(cert, args.cacertfile, 'certificate authority')
 
 
-def create_cert(args):
+def create_cert(args, conf):
     priv_key_cert = __create_private_key(args.privkeypassphrase, 
         ec.SECP256R1(), 'attestation certificate', args.privkeyfile)
 
     # Generate CSR
     csr = x509.CertificateSigningRequestBuilder().subject_name(
-        x509.Name([
-            x509.NameAttribute(NameOID.ORGANIZATION_NAME, u'FlexSecure'),
-            x509.NameAttribute(NameOID.ORGANIZATIONAL_UNIT_NAME, u'Authenticator Attestation'),
-            x509.NameAttribute(NameOID.COMMON_NAME, u'FlexSecure U2F Token'),
-        ])
-    ).sign(priv_key_cert, hashes.SHA256())
+        conf.certName).sign(priv_key_cert, hashes.SHA256())
 
     # Load CA
     with open(args.cacertfile, 'rb') as f:
@@ -109,13 +101,15 @@ def create_cert(args):
     ).not_valid_after(
         datetime.datetime.utcnow() + datetime.timedelta(days = args.days)
     ).add_extension(
-        x509.BasicConstraints(ca = False, path_length = None), 
-        critical = True
+        x509.BasicConstraints(ca = False, path_length = None), critical = True
     ).add_extension(
-        fidoTransportExtension,
-        critical = False
-    ).sign(priv_key_ca, hashes.SHA256())
+        fidoTransportExtension, critical = False
+    ).add_extension(
+        conf.fido2OIDExt, critical = False
+    ).add_extension(
+        conf.fido2AAGUIDExt, critical = False)
 
+    cert = cert.sign(priv_key_ca, hashes.SHA256())
     cert_print_info(ca, 'certificate authority')
     __store_public(cert, args.certfile, 'attestation certificate')
 
@@ -139,15 +133,26 @@ def show_cert(args):
     decoder.read() # ecPrivkeyVer1
     tag, priv_key_bytes = decoder.read() # privateKey
 
+    cert = x509.load_der_x509_certificate(cert_der)
+
     if(not args.installonly):
-        cert_print_info(x509.load_der_x509_certificate(cert_der), 'attestation certificate')
+        cert_print_info(cert, 'attestation certificate')
         print('info: Public attestation certificate ' + str(len(cert_der))  + ' bytes:')
         print(cert_der.hex())
-        print('info: Applet installation parameter (contains private attestation key ' + str(len(priv_key_bytes)) + ' bytes):')
-    
-    flags = '00'
-    if(args.variant == 'u2fci'): flags = '01'
-    print(flags + f'{len(cert_der):04x}'+ priv_key_bytes.hex())
+
+    if(args.mode == 'u2f' or args.mode == 'u2fci'):
+        print('info: Applet installation parameter (contains private attestation key ' + 
+            str(len(priv_key_bytes)) + ' bytes):')
+        flags = '00'
+        if(args.mode == 'u2fci'): flags = '01'
+        print(flags + f'{len(cert_der):04x}'+ priv_key_bytes.hex())
+    elif(args.mode == 'fido2'):
+        decoder = asn1.Decoder()
+        decoder.start(cert.extensions.get_extension_for_oid(fidoAAGUIDExtensionOID).value.value)
+        tag, aaguid_bytes = decoder.read()
+        print('info: Applet installation parameter (contains private attestation key ' + 
+            str(len(priv_key_bytes)) + ' bytes, AAGUID ' + str(len(aaguid_bytes)) +' bytes):')
+        print('00' + f'{len(cert_der):04x}' + priv_key_bytes.hex() + aaguid_bytes.hex())
 
 
 def validate_cert(args):

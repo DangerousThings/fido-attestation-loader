@@ -134,3 +134,5 @@ dmypy.json
 *.crt
 *.p8
 *.der
+
+settings.ini

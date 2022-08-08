@@ -1,0 +1,14 @@
+[ca]
+O=Attestation
+OU=Authenticator Attestation
+CN=Attestation Root CA
+
+[cert]
+O=Attestation
+OU=Authenticator Attestation
+CN=Attestation Token
+
+[fido2]
+aaguid=27291256-2735-45b5-99f9-2863c9dedf72
+devns=1.3.6.1.4.1.0.2
+devid=1.3.6.1.4.1.0.1.1

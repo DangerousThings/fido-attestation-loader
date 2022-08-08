@@ -42,15 +42,18 @@ def parse():
     parser_handle_create.add_argument('-d', '--days', nargs='?', dest='days', type=int, 
         const=3652, default=3652, 
         help='certificate authority validity duration in days (default: 3652 = 10 years)')
+    parser_handle_create.add_argument('-s', '--settings', nargs='?', dest='settings', type=str, 
+        const='settings.ini', default='settings.ini', 
+        help='settings file for certificate metadata (default: settings.ini)')
     parser_handle_create.add_argument('-o', '--overwrite', dest='overwrite', type=bool, 
         default=False, action = argparse.BooleanOptionalAction,
         help='allow overwriting existing files')
 
     # Mode options
     parser_handle_mode = argparse.ArgumentParser(add_help=False)
-    parser_handle_mode.add_argument('-v', '--variant', nargs='?', dest='variant', type=str,
+    parser_handle_mode.add_argument('-m', '--mode', nargs='?', dest='mode', type=str,
         const='u2f', default='u2f', choices=['u2f', 'u2fci', 'fido2'], 
-        help='Certificate variant to handle')
+        help='Applet variant to handle')
 
     # Interfacing options
     parser_handle_load = argparse.ArgumentParser(add_help=False)
@@ -77,7 +80,7 @@ def parse():
 
     # CERT CREATE action
     parser_cert_create = subparsers_cert.add_parser('create', 
-        parents=[parser_handle_cert, parser_handle_cert_pkey, parser_handle_mode,
+        parents=[parser_handle_cert, parser_handle_cert_pkey,
             parser_handle_ca, parser_handle_ca_pkey, parser_handle_create], 
         help='create a new attestation certificate')
     
@@ -96,7 +99,7 @@ def parse():
 
     # CERT UPLOAD action
     parser_cert_validate = subparsers_cert.add_parser('upload', 
-        parents=[parser_handle_cert, parser_handle_load], 
+        parents=[parser_handle_cert, parser_handle_load, parser_handle_mode], 
         help='upload an existing public attestation certificate to a hardware token')
 
     args = parser.parse_args()

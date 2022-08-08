@@ -3,6 +3,7 @@
 import attestation.argparser as arg
 import attestation.certificate as cert
 import attestation.loader as load
+import attestation.config as config
 
 
 if __name__ == '__main__':
@@ -11,12 +12,16 @@ if __name__ == '__main__':
 
     if(args.listreaders):
         load.list_readers()
+
+    if(args.verb == 'create'):
+        conf = config.parse(args.settings)
+
     if(args.action == 'ca'):
         if(args.verb == 'create'):
-            cert.create_ca(args)
+            cert.create_ca(args, conf)
     elif(args.action == 'cert'):
         if(args.verb == 'create'):
-            cert.create_cert(args)
+            cert.create_cert(args, conf)
         elif(args.verb == 'show'):
             cert.show_cert(args)
         elif(args.verb == 'validate'):
