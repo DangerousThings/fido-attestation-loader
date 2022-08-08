@@ -98,9 +98,12 @@ def parse():
         help='validate an existing attestation certificate against a certificate authority')
 
     # CERT UPLOAD action
-    parser_cert_validate = subparsers_cert.add_parser('upload', 
+    parser_cert_upload = subparsers_cert.add_parser('upload', 
         parents=[parser_handle_cert, parser_handle_load, parser_handle_mode], 
         help='upload an existing public attestation certificate to a hardware token')
+    parser_cert_upload.add_argument('-lo', '--log--apdus-only', dest='apduonly', type=bool, 
+        default=False, action = argparse.BooleanOptionalAction,
+        help='only display APDUs without sending')
 
     args = parser.parse_args()
     return (parser, args)
