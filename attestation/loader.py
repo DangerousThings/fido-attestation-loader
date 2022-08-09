@@ -14,11 +14,7 @@ def list_readers():
         print(str(i) + ': ' + str(reader))
 
 
-def upload_cert(args):
-    with open(args.certfile, 'rb') as f:
-        cert_der = f.read()
-        cert_print_info(x509.load_der_x509_certificate(cert_der), 'attestation certificate')
-
+def generate_apdus(cert_der, args):
     apdus = []
     # Select the applet
     apdus.append([0x00, 0xA4, 0x04, 0x00, 0x08, 0xA0, 0x00, 0x00, 0x06, 0x47, 0x2F, 0x00, 0x01])
@@ -36,7 +32,15 @@ def upload_cert(args):
             cla = 0x80
             if(len(cert_der) - offset > 255): cla |= 0x10
             apdus.append([cla, 0x10, 0x00, 0x00, length] + cert_der[offset:(offset + length)])
+    return apdus
 
+
+def upload_cert(args):
+    with open(args.certfile, 'rb') as f:
+        cert_der = f.read()
+        cert_print_info(x509.load_der_x509_certificate(cert_der), 'attestation certificate')
+
+    apdus = generate_apdus(cert_der, args)
     if(args.apduonly):
         print('info: Generated ' + str(len(apdus)) + ' APDUs:')
         for i, apdu in enumerate(apdus):

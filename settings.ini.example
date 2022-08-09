@@ -1,3 +1,6 @@
+[metadata]
+description=FIDO Authentication Token
+
 [ca]
 C=US
 O=Attestation
@@ -8,9 +11,20 @@ CN=Attestation Root CA
 C=US
 O=Attestation
 OU=Authenticator Attestation
-CN=Attestation Token
+CN=Token Attestation
 
 [fido2]
 aaguid=27291256-2735-45b5-99f9-2863c9dedf72
 devns=1.3.6.1.4.1.0.2
 devid=1.3.6.1.4.1.0.1.1
+
+[fidesmo]
+title=FIDO
+description=FIDO description.
+issuerAccountId=0
+executableLoadFile=A0000006472F00
+executableModule=A0000006472F0001
+application=A0000006472F0001
+waitingMessage=Please wait while the attestation certificate is loaded.
+successMessage=Installation successful.
+failureMessage=Installation failure.

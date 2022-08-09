@@ -1,8 +1,7 @@
-import sys, os.path, argparse, getpass, datetime
+import datetime
 from cryptography.hazmat.primitives import hashes, serialization as ser
-from cryptography.hazmat.primitives.asymmetric import ec, padding
+from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography import x509
-from cryptography.x509.oid import NameOID, ExtendedKeyUsageOID
 from cryptography.exceptions import InvalidSignature
 import asn1
 
@@ -14,6 +13,7 @@ fidoTransportExtension = x509.UnrecognizedExtension(
 
 # FIDO2 AAGUID extension
 fidoAAGUIDExtensionOID = x509.ObjectIdentifier('1.3.6.1.4.1.45724.1.1.4')
+
 
 def __create_private_key(passphrase, curve, name, file):
     # Generate and store private key
@@ -112,49 +112,6 @@ def create_cert(args, conf):
     cert = cert.sign(priv_key_ca, hashes.SHA256())
     cert_print_info(ca, 'certificate authority')
     __store_public(cert, args.certfile, 'attestation certificate')
-
-
-def show_cert(args):
-    with open(args.certfile, 'rb') as f:
-        cert_der = f.read()
-    with open(args.privkeyfile, 'rb') as f:
-        try:
-            priv_key_der = ser.load_der_private_key(f.read(), 
-                password = args.privkeypassphrase.encode('utf-8')).private_bytes(
-                    ser.Encoding.DER, ser.PrivateFormat.TraditionalOpenSSL, ser.NoEncryption())
-        except ValueError as e:
-            print('error: Cannot read private attestation certificate key: ' + str(e))
-            exit(1)
-
-    # Extract the DER / ASN1 PKCS#1 encoded private key bytes
-    decoder = asn1.Decoder()
-    decoder.start(priv_key_der)
-    decoder.enter() # SEQUENCE
-    decoder.read() # ecPrivkeyVer1
-    tag, priv_key_bytes = decoder.read() # privateKey
-
-    cert = x509.load_der_x509_certificate(cert_der)
-
-    if(not args.installonly):
-        cert_print_info(cert, 'attestation certificate')
-        print('info: Public attestation certificate ' + str(len(cert_der))  + ' bytes:')
-        print(cert_der.hex())
-
-    if(args.mode == 'u2f' or args.mode == 'u2fci'):
-        if(not args.installonly):
-            print('info: Applet installation parameter (contains private attestation key ' + 
-                str(len(priv_key_bytes)) + ' bytes):')
-        flags = '00'
-        if(args.mode == 'u2fci'): flags = '01'
-        print(flags + f'{len(cert_der):04x}'+ priv_key_bytes.hex())
-    elif(args.mode == 'fido2'):
-        decoder = asn1.Decoder()
-        decoder.start(cert.extensions.get_extension_for_oid(fidoAAGUIDExtensionOID).value.value)
-        tag, aaguid_bytes = decoder.read()
-        if(not args.installonly):
-            print('info: Applet installation parameter (contains private attestation key ' + 
-                str(len(priv_key_bytes)) + ' bytes, AAGUID ' + str(len(aaguid_bytes)) +' bytes):')
-        print('00' + f'{len(cert_der):04x}' + priv_key_bytes.hex() + aaguid_bytes.hex())
 
 
 def validate_cert(args):

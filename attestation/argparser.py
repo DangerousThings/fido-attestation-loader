@@ -4,8 +4,13 @@ import os, argparse, getpass
 def parse():
     parser = argparse.ArgumentParser(description = 'Manage attestation certificates and certificate authorities')
 
+    parser.add_argument('-hd', '--help-documentation', action='store_true', dest='documentation', 
+        help='Print the complete help documentation')
     parser.add_argument('-l', '--list-readers', action='store_true', dest='listreaders', 
         help='list available PC/SC readers')
+    parser.add_argument('-s', '--settings', nargs='?', dest='settings', type=str, 
+        const='settings.ini', default='settings.ini', 
+        help='settings file for metadata (default: settings.ini)')
         
     actions = parser.add_subparsers(help='desired action to perform', dest='action') 
 
@@ -22,6 +27,9 @@ def parse():
     parser_handle_cert_pkey.add_argument('-p', '--private-key-passphrase', nargs='?', 
         dest='privkeypassphrase', type=str,
         help='passphrase to de/encrypt the private attestation key')
+    parser_handle_cert_pkey.add_argument('-pf', '--private-key-passphrase-file', nargs='?', 
+        dest='privkeypassphrasefile', type=str, const='attestation_key.pass', default='attestation_key.pass', 
+        help='file that contains the passphrase to de/encrypt the private attestation key')
 
     # CA certificate
     parser_handle_ca = argparse.ArgumentParser(add_help=False)
@@ -36,15 +44,15 @@ def parse():
     parser_handle_ca_pkey.add_argument('-cap', '--certificate-authority-key-passphrase', 
         nargs='?', dest='caprivkeypassphrase', type=str,
         help='passphrase to de/encrypt the private certificate authority key')
+    parser_handle_ca_pkey.add_argument('-capf', '--certificate-authority-key-passphrase-file', 
+        nargs='?', dest='caprivkeypassphrasefile', type=str, const='ca_key.pass', default='ca_key.pass', 
+        help='file that contains the passphrase to de/encrypt the private certificate authority key (default: ca_key.pass)')
 
     # Generation options
     parser_handle_create = argparse.ArgumentParser(add_help=False)
     parser_handle_create.add_argument('-d', '--days', nargs='?', dest='days', type=int, 
         const=3652, default=3652, 
         help='certificate authority validity duration in days (default: 3652 = 10 years)')
-    parser_handle_create.add_argument('-s', '--settings', nargs='?', dest='settings', type=str, 
-        const='settings.ini', default='settings.ini', 
-        help='settings file for certificate metadata (default: settings.ini)')
     parser_handle_create.add_argument('-o', '--overwrite', dest='overwrite', type=bool, 
         default=False, action = argparse.BooleanOptionalAction,
         help='allow overwriting existing files')
@@ -52,8 +60,8 @@ def parse():
     # Mode options
     parser_handle_mode = argparse.ArgumentParser(add_help=False)
     parser_handle_mode.add_argument('-m', '--mode', nargs='?', dest='mode', type=str,
-        const='u2f', default='u2f', choices=['u2f', 'u2fci', 'fido2'], 
-        help='Applet variant to handle')
+        const='fido2', default='fido2', choices=['u2f', 'u2fci', 'fido2'], 
+        help='Applet variant to handle (default: fido2)')
 
     # Interfacing options
     parser_handle_load = argparse.ArgumentParser(add_help=False)
@@ -88,9 +96,9 @@ def parse():
     parser_cert_show = subparsers_cert.add_parser('show', 
         parents=[parser_handle_cert, parser_handle_cert_pkey, parser_handle_mode], 
         help='show details of an existing attestation certificate')
-    parser_cert_show.add_argument('-ao', '--applet-install-only', dest='installonly', type=bool, 
-        default=False, action = argparse.BooleanOptionalAction,
-        help='show only applet installation parameter')
+    parser_cert_show.add_argument('-f', '--format', nargs='?', dest='format', type=str,
+        const='human', default='human', choices=['human', 'parameter', 'fidesmo'], 
+        help='Format of the certificate to display')
 
     # CERT VAL action
     parser_cert_validate = subparsers_cert.add_parser('validate', 
@@ -110,6 +118,21 @@ def parse():
 
 
 def validate(parser, args):
+    if(args.documentation):
+        print(parser.format_help())
+        subparsers_actions = [
+            action for action in parser._actions 
+            if isinstance(action, argparse._SubParsersAction)]
+        for subparsers_action in subparsers_actions:
+            for _, action in subparsers_action.choices.items():
+                subparsers_verbs = [
+                    action for action in action._actions 
+                    if isinstance(action, argparse._SubParsersAction)]
+                for subparsers_verb in subparsers_verbs:
+                    for _, verb in subparsers_verb.choices.items():
+                        print(verb.format_help())
+        exit(0)
+
     if(args.listreaders):
         return
 
@@ -117,19 +140,21 @@ def validate(parser, args):
         parser.print_help()
         exit(1)
 
+    # Print action to be performed
     if(args.action == 'ca'):
         if(args.verb == 'create'):
             print('info: Creating a new certificate authority')
     elif(args.action == 'cert'):
         if(args.verb == 'create'):
             print('info: Creating a new attestation certificate')
-        elif(args.verb == 'show' and not args.installonly):
+        elif(args.verb == 'show' and args.format == 'human'):
             print('info: Showing an existing attestation certificate')
         elif(args.verb == 'validate'):
             print('info: Validating an existing attestation certificate against a certificate authority')
         elif(args.verb == 'upload'):
             print('info: Uploading a public attestation certificate to a hardware token')
 
+    # Query any needed passphrases and check for existing files
     if(args.action == 'cert'):
         if(args.verb == 'create'):
             if(os.path.isfile(args.certfile) and (not args.overwrite)):
@@ -141,6 +166,9 @@ def validate(parser, args):
                     '\' already exists. Run with \'-o\' to enable overwriting files.')
                 exit(1)
         if(args.verb == 'create' or args.verb == 'show'):
+            if(os.path.isfile(args.privkeypassphrasefile)):
+                with open(args.privkeypassphrasefile, 'r') as f:
+                    args.privkeypassphrase = f.read()
             if(args.privkeypassphrase is None):
                 if(args.verb == 'create'):
                     pw1 = getpass.getpass('prompt: No passphrase to encrypt the private attestation key specified, ' + 
@@ -166,6 +194,9 @@ def validate(parser, args):
             exit(1)
 
     if((args.action == 'cert' and args.verb == 'create') or args.action == 'ca'):
+        if(os.path.isfile(args.caprivkeypassphrasefile)):
+            with open(args.caprivkeypassphrasefile, 'r') as f:
+                args.caprivkeypassphrase = f.read()
         if(args.caprivkeypassphrase is None):
             if(args.action == 'ca'):
                 pw1 = getpass.getpass('prompt: No passphrase to encrypt the certificate authority private key specified, ' + 
