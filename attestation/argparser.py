@@ -94,10 +94,10 @@ def parse():
     
     # CERT SHOW action
     parser_cert_show = subparsers_cert.add_parser('show', 
-        parents=[parser_handle_cert, parser_handle_cert_pkey, parser_handle_mode], 
+        parents=[parser_handle_cert, parser_handle_ca, parser_handle_cert_pkey, parser_handle_mode], 
         help='show details of an existing attestation certificate')
     parser_cert_show.add_argument('-f', '--format', nargs='?', dest='format', type=str,
-        const='human', default='human', choices=['human', 'parameter', 'fidesmo'], 
+        const='human', default='human', choices=['human', 'parameter', 'fidesmo', 'metadata'], 
         help='Format of the certificate to display')
 
     # CERT VAL action

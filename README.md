@@ -18,7 +18,7 @@ Required modules are `cryptography`, `asn1`, and `pyscard`. The executable might
 
 ### Settings File
 
-Before you start, copy the provided `settings.ini.example` file to `settings.ini`, and adjust the parameters. Enter the metadata of your token and company, and specify your AAGUID and assigned OIDs.
+Before you start, copy the provided `settings.example.ini` file to `settings.ini`, and adjust the parameters. Enter the metadata of your token and company, and specify your AAGUID and assigned OIDs. To generate proper FIDO metadata, copy `icon.example.png` to `icon.png`, or paste any icon you want.
 
 If you want to deploy to Fidesmo, fill out that section with your data as well.
 
@@ -96,6 +96,16 @@ Note that this requires you to either specify the attestation private key passph
 Replace `APPID` with the application ID of your Fidesmo app, `SERVICEID` with the ID of the service you want to update (e.g. `install`), and `USERNAME` with your API username. `curl` will then ask you for your API password interactively, again to prevent your password landing in the terminal history file.
 
 
+### Generating FIDO Metadata
+
+To generate FIDO MDS3 metadata for https://fidoalliance.org/metadata/ or your own servers:
+
+```
+./attestation.py cert show -f metadata
+```
+
+This will also encode the icon file specified in your settings file, default is `icon.example.png`.
+
 ## Complete Commandline Reference
 
 Use `./attestation.py -hd` to print this information.
@@ -162,13 +172,15 @@ options:
   -o, --overwrite, --no-overwrite
                         allow overwriting existing files (default: False)
 
-usage: attestation.py cert show [-h] [-c [CERTFILE]] [-k [PRIVKEYFILE]] [-p [PRIVKEYPASSPHRASE]] [-pf [PRIVKEYPASSPHRASEFILE]] [-m [{u2f,u2fci,fido2}]]
-                                [-f [{human,parameter,fidesmo}]]
+usage: attestation.py cert show [-h] [-c [CERTFILE]] [-cac [CACERTFILE]] [-k [PRIVKEYFILE]] [-p [PRIVKEYPASSPHRASE]] [-pf [PRIVKEYPASSPHRASEFILE]] [-m [{u2f,u2fci,fido2}]]
+                                [-f [{human,parameter,fidesmo,metadata}]]
 
 options:
   -h, --help            show this help message and exit
   -c [CERTFILE], --certificate [CERTFILE]
                         filename of the public attestation certificate (default: attestation.der)
+  -cac [CACERTFILE], --certificate-authority [CACERTFILE]
+                        filename of the public certificate authority certificate (default: ca.der)
   -k [PRIVKEYFILE], --private-key [PRIVKEYFILE]
                         filename of the private attestation key (default: attestation_key.p8)
   -p [PRIVKEYPASSPHRASE], --private-key-passphrase [PRIVKEYPASSPHRASE]
@@ -177,7 +189,7 @@ options:
                         file that contains the passphrase to de/encrypt the private attestation key
   -m [{u2f,u2fci,fido2}], --mode [{u2f,u2fci,fido2}]
                         Applet variant to handle (default: fido2)
-  -f [{human,parameter,fidesmo}], --format [{human,parameter,fidesmo}]
+  -f [{human,parameter,fidesmo,metadata}], --format [{human,parameter,fidesmo,metadata}]
                         Format of the certificate to display
 
 usage: attestation.py cert validate [-h] [-c [CERTFILE]] [-cac [CACERTFILE]]

@@ -105,9 +105,9 @@ def create_cert(args, conf):
     ).add_extension(
         fidoTransportExtension, critical = False
     ).add_extension(
-        conf.fido2OIDExt, critical = False
+        conf.fido2.oidExt, critical = False
     ).add_extension(
-        conf.fido2AAGUIDExt, critical = False)
+        conf.fido2.aaguidExt, critical = False)
 
     cert = cert.sign(priv_key_ca, hashes.SHA256())
     cert_print_info(ca, 'certificate authority')
