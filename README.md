@@ -35,7 +35,7 @@ Option one requires an interactive terminal, which might be a problem if you wan
 
 ## Creating a New Certificate Chain
 
-All the generated public certificates are DER-encoded.
+All the generated public certificates are DER-encoded X.509 certificates.
 
 Create a new certificate authority:
 
