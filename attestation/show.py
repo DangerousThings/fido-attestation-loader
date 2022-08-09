@@ -36,7 +36,8 @@ def show_cert(args, conf):
     decoder = asn1.Decoder()
     decoder.start(cert.extensions.get_extension_for_oid(fidoAAGUIDExtensionOID).value.value)
     _, aaguid_bytes = decoder.read()
-    param += aaguid_bytes.hex()
+    if(args.mode == 'fido2'):
+        param += aaguid_bytes.hex()
     aaguid = str(uuid.UUID(bytes=aaguid_bytes))
 
     # Print public cert and some preamble
