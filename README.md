@@ -24,7 +24,7 @@ If you want to deploy to Fidesmo, fill out that section with your data as well.
 
 ### Private Key Encryption
 
-The certificate authority private key, as well as the attestation private key are encrypted using a user-specified passphrase. To interact with the keys, the passphrase has to be specified in one on three ways for various commands:
+The certificate authority private key, as well as the attestation private key are encrypted using AES-256-CBC, conforming to PKCS #8 and #5.This requires a user-specified passphrase. To interact with the keys, the passphrase has to be specified in one on three ways for various commands:
 
 1. Interactively during script runtime, by entering it when the script asks for input.
 2. As a commandline parameter, by using the `-p` and `-cap` parameters.
@@ -34,6 +34,8 @@ Option one requires an interactive terminal, which might be a problem if you wan
 
 
 ## Creating a New Certificate Chain
+
+All the generated public certificates are DER-encoded.
 
 Create a new certificate authority:
 
@@ -55,7 +57,7 @@ To verify the signature of an attestation certificate against a certificate auth
 ./attestation.py cert validate
 ```
 
-All these commands accept optional parameters to specify the file names of all certificate and key files, use the `-h` help parameter to get detailed information.
+All these commands accept optional parameters to specify the file names of all certificate and key files, use the `-h` help parameter to get detailed information. The default file names are `ca.der`, `ca_key.p8`, `attestation.der`, and `attestation_key.p8`.
 
 ## Deploying an Attestation Certificate
 
