@@ -111,7 +111,7 @@ This will also encode the icon file specified in your settings file, default is 
 Use `./attestation.py -hd` to print this information.
 
 ```
-usage: attestation.py [-h] [-hd] [-l] [-s [SETTINGS]] {ca,cert} ...
+usage: attestation.py [-h] [-hd] [-l] {ca,cert} ...
 
 Manage attestation certificates and certificate authorities
 
@@ -125,14 +125,14 @@ options:
   -hd, --help-documentation
                         Print the complete help documentation
   -l, --list-readers    list available PC/SC readers
-  -s [SETTINGS], --settings [SETTINGS]
-                        settings file for metadata (default: settings.ini)
 
-usage: attestation.py ca create [-h] [-cac [CACERTFILE]] [-cak [CAPRIVKEYFILE]] [-cap [CAPRIVKEYPASSPHRASE]] [-capf [CAPRIVKEYPASSPHRASEFILE]] [-d [DAYS]]
+usage: attestation.py ca create [-h] [-s [SETTINGS]] [-cac [CACERTFILE]] [-cak [CAPRIVKEYFILE]] [-cap [CAPRIVKEYPASSPHRASE]] [-capf [CAPRIVKEYPASSPHRASEFILE]] [-d [DAYS]]
                                 [-o | --overwrite | --no-overwrite]
 
 options:
   -h, --help            show this help message and exit
+  -s [SETTINGS], --settings [SETTINGS]
+                        settings file for metadata (default: settings.ini)
   -cac [CACERTFILE], --certificate-authority [CACERTFILE]
                         filename of the public certificate authority certificate (default: ca.der)
   -cak [CAPRIVKEYFILE], --certificate-authority-key [CAPRIVKEYFILE]
@@ -146,11 +146,13 @@ options:
   -o, --overwrite, --no-overwrite
                         allow overwriting existing files (default: False)
 
-usage: attestation.py cert create [-h] [-c [CERTFILE]] [-k [PRIVKEYFILE]] [-p [PRIVKEYPASSPHRASE]] [-pf [PRIVKEYPASSPHRASEFILE]] [-cac [CACERTFILE]] [-cak [CAPRIVKEYFILE]]
-                                  [-cap [CAPRIVKEYPASSPHRASE]] [-capf [CAPRIVKEYPASSPHRASEFILE]] [-d [DAYS]] [-o | --overwrite | --no-overwrite]
+usage: attestation.py cert create [-h] [-s [SETTINGS]] [-c [CERTFILE]] [-k [PRIVKEYFILE]] [-p [PRIVKEYPASSPHRASE]] [-pf [PRIVKEYPASSPHRASEFILE]] [-cac [CACERTFILE]]
+                                  [-cak [CAPRIVKEYFILE]] [-cap [CAPRIVKEYPASSPHRASE]] [-capf [CAPRIVKEYPASSPHRASEFILE]] [-d [DAYS]] [-o | --overwrite | --no-overwrite]
 
 options:
   -h, --help            show this help message and exit
+  -s [SETTINGS], --settings [SETTINGS]
+                        settings file for metadata (default: settings.ini)
   -c [CERTFILE], --certificate [CERTFILE]
                         filename of the public attestation certificate (default: attestation.der)
   -k [PRIVKEYFILE], --private-key [PRIVKEYFILE]
@@ -172,11 +174,13 @@ options:
   -o, --overwrite, --no-overwrite
                         allow overwriting existing files (default: False)
 
-usage: attestation.py cert show [-h] [-c [CERTFILE]] [-cac [CACERTFILE]] [-k [PRIVKEYFILE]] [-p [PRIVKEYPASSPHRASE]] [-pf [PRIVKEYPASSPHRASEFILE]] [-m [{u2f,u2fci,fido2}]]
-                                [-f [{human,parameter,fidesmo,metadata}]]
+usage: attestation.py cert show [-h] [-s [SETTINGS]] [-c [CERTFILE]] [-cac [CACERTFILE]] [-k [PRIVKEYFILE]] [-p [PRIVKEYPASSPHRASE]] [-pf [PRIVKEYPASSPHRASEFILE]]
+                                [-m [{u2f,u2fci,fido2}]] [-f [{human,parameter,fidesmo,metadata}]]
 
 options:
   -h, --help            show this help message and exit
+  -s [SETTINGS], --settings [SETTINGS]
+                        settings file for metadata (default: settings.ini)
   -c [CERTFILE], --certificate [CERTFILE]
                         filename of the public attestation certificate (default: attestation.der)
   -cac [CACERTFILE], --certificate-authority [CACERTFILE]
@@ -192,19 +196,23 @@ options:
   -f [{human,parameter,fidesmo,metadata}], --format [{human,parameter,fidesmo,metadata}]
                         Format of the certificate to display
 
-usage: attestation.py cert validate [-h] [-c [CERTFILE]] [-cac [CACERTFILE]]
+usage: attestation.py cert validate [-h] [-s [SETTINGS]] [-c [CERTFILE]] [-cac [CACERTFILE]]
 
 options:
   -h, --help            show this help message and exit
+  -s [SETTINGS], --settings [SETTINGS]
+                        settings file for metadata (default: settings.ini)
   -c [CERTFILE], --certificate [CERTFILE]
                         filename of the public attestation certificate (default: attestation.der)
   -cac [CACERTFILE], --certificate-authority [CACERTFILE]
                         filename of the public certificate authority certificate (default: ca.der)
 
-usage: attestation.py cert upload [-h] [-c [CERTFILE]] [-r [READER]] [-m [{u2f,u2fci,fido2}]] [-lo | --log--apdus-only | --no-log--apdus-only]
+usage: attestation.py cert upload [-h] [-s [SETTINGS]] [-c [CERTFILE]] [-r [READER]] [-m [{u2f,u2fci,fido2}]] [-lo | --log--apdus-only | --no-log--apdus-only]
 
 options:
   -h, --help            show this help message and exit
+  -s [SETTINGS], --settings [SETTINGS]
+                        settings file for metadata (default: settings.ini)
   -c [CERTFILE], --certificate [CERTFILE]
                         filename of the public attestation certificate (default: attestation.der)
   -r [READER], --reader [READER]

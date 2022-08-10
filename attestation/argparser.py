@@ -8,11 +8,14 @@ def parse():
         help='Print the complete help documentation')
     parser.add_argument('-l', '--list-readers', action='store_true', dest='listreaders', 
         help='list available PC/SC readers')
-    parser.add_argument('-s', '--settings', nargs='?', dest='settings', type=str, 
-        const='settings.ini', default='settings.ini', 
-        help='settings file for metadata (default: settings.ini)')
-        
+
     actions = parser.add_subparsers(help='desired action to perform', dest='action') 
+
+    # Settings
+    parser_handle_settings = argparse.ArgumentParser(add_help=False)
+    parser_handle_settings.add_argument('-s', '--settings', nargs='?', dest='settings', type=str, 
+    const='settings.ini', default='settings.ini', 
+    help='settings file for metadata (default: settings.ini)')
 
     # Attestation certificate
     parser_handle_cert = argparse.ArgumentParser(add_help=False)
@@ -77,7 +80,7 @@ def parse():
     
     # CA CREATE action
     parser_ca_create = subparsers_ca.add_parser('create', 
-        parents=[parser_handle_ca, parser_handle_ca_pkey, parser_handle_create], 
+        parents=[parser_handle_settings, parser_handle_ca, parser_handle_ca_pkey, parser_handle_create], 
         help='create a new certificate authority')
 
     # CERT action
@@ -88,13 +91,13 @@ def parse():
 
     # CERT CREATE action
     parser_cert_create = subparsers_cert.add_parser('create', 
-        parents=[parser_handle_cert, parser_handle_cert_pkey,
+        parents=[parser_handle_settings, parser_handle_cert, parser_handle_cert_pkey,
             parser_handle_ca, parser_handle_ca_pkey, parser_handle_create], 
         help='create a new attestation certificate')
     
     # CERT SHOW action
     parser_cert_show = subparsers_cert.add_parser('show', 
-        parents=[parser_handle_cert, parser_handle_ca, parser_handle_cert_pkey, parser_handle_mode], 
+        parents=[parser_handle_settings, parser_handle_cert, parser_handle_ca, parser_handle_cert_pkey, parser_handle_mode], 
         help='show details of an existing attestation certificate')
     parser_cert_show.add_argument('-f', '--format', nargs='?', dest='format', type=str,
         const='human', default='human', choices=['human', 'parameter', 'fidesmo', 'metadata'], 
@@ -102,12 +105,12 @@ def parse():
 
     # CERT VAL action
     parser_cert_validate = subparsers_cert.add_parser('validate', 
-        parents=[parser_handle_cert, parser_handle_ca], 
+        parents=[parser_handle_settings, parser_handle_cert, parser_handle_ca], 
         help='validate an existing attestation certificate against a certificate authority')
 
     # CERT UPLOAD action
     parser_cert_upload = subparsers_cert.add_parser('upload', 
-        parents=[parser_handle_cert, parser_handle_load, parser_handle_mode], 
+        parents=[parser_handle_settings, parser_handle_cert, parser_handle_load, parser_handle_mode], 
         help='upload an existing public attestation certificate to a hardware token')
     parser_cert_upload.add_argument('-lo', '--log--apdus-only', dest='apduonly', type=bool, 
         default=False, action = argparse.BooleanOptionalAction,
