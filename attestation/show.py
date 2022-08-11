@@ -71,6 +71,7 @@ def show_cert(args, conf):
                     'endpoint': '/ccm/install',
                     'content': {
                         'executableLoadFile': conf.fidesmo.executableLoadFile,
+                        'searchBy': conf.fidesmo.searchBy,
                         'executableModule': conf.fidesmo.executableModule,
                         'application': conf.fidesmo.application,
                         'parameters': param

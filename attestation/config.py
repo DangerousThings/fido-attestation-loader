@@ -20,6 +20,7 @@ class FidesmoConfig(NamedTuple):
     description: str
     issuerAccountId: int
     executableLoadFile: str
+    searchBy: str
     executableModule: str
     application: str
     waitingMessage: str
@@ -83,6 +84,7 @@ def parse(args):
             description = config.get('fidesmo', 'description', fallback='Generic FIDO description.'),
             issuerAccountId = int(config.get('fidesmo', 'issuerAccountId', fallback=0)),
             executableLoadFile = config.get('fidesmo', 'executableLoadFile', fallback='A0000006472F00'),
+            searchBy = config.get('fidesmo', 'searchBy', fallback='aid'),
             executableModule = config.get('fidesmo', 'executableModule', fallback='A0000006472F0001'),
             application = config.get('fidesmo', 'application', fallback='A0000006472F0001'),
             waitingMessage = config.get('fidesmo', 'waitingMessage', fallback='Please wait while the attestation certificate is loaded.'),
