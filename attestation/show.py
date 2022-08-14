@@ -139,6 +139,7 @@ def show_cert(args, conf):
                 'wireless',
                 'nfc'
             ],
+            'tcDisplay': [ ],
             'attestationRootCertificates': [
                 base64.b64encode(ca_der).decode('ASCII')
             ],
