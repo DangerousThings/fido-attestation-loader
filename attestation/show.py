@@ -93,7 +93,6 @@ def show_cert(args, conf):
     elif(args.format == 'metadata'):
         js = {
             'legalHeader': 'https://fidoalliance.org/metadata/metadata-statement-legal-header/',
-            'aaguid': aaguid,
             'attestationCertificateKeyIdentifiers': [
                 (x509.SubjectKeyIdentifier.from_public_key(cert.public_key())).digest.hex()
             ],
@@ -146,6 +145,7 @@ def show_cert(args, conf):
             'icon': conf.meta.icon
         }
         if(args.mode == 'fido2'):
+            js['aaguid'] = aaguid
             js['authenticatorGetInfo'] = {
                 'versions': [ 'FIDO_2_0' ],
                 'extensions': [ ],
