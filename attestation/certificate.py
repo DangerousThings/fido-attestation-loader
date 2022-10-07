@@ -32,6 +32,30 @@ def __store_public(cert, file, name):
     print('success: Wrote public ' + name + ' file \'' + file + '\'')
 
 
+def cert_public_bytes_der(cert):
+    der_fragment = cert.public_key().public_bytes(
+        ser.Encoding.DER, ser.PublicFormat.SubjectPublicKeyInfo)
+    # Extract the DER / ASN1 PKCS#1 encoded public key bytes
+    decoder = asn1.Decoder()
+    decoder.start(der_fragment)
+    decoder.enter() # SEQUENCE
+    decoder.read() # skip algorithm identifier
+    _, pub_key_bytes = decoder.read() # publicKey
+    return pub_key_bytes
+
+
+def key_private_bytes_der(priv_key):
+    der_fragment = priv_key.private_bytes(
+        ser.Encoding.DER, ser.PrivateFormat.TraditionalOpenSSL, ser.NoEncryption())
+    # Extract the DER / ASN1 PKCS#1 encoded private key bytes
+    decoder = asn1.Decoder()
+    decoder.start(der_fragment)
+    decoder.enter() # SEQUENCE
+    decoder.read() # ecPrivkeyVer1
+    _, priv_key_bytes = decoder.read() # privateKey
+    return priv_key_bytes
+
+
 def cert_print_info(cert, name):
     print('info: Public ' + name + ' serial number: ' + str(cert.serial_number))
     fingerprint = cert.fingerprint(hashes.SHA256())
@@ -40,7 +64,7 @@ def cert_print_info(cert, name):
 
 def create_ca(args, conf):
     priv_key = __create_private_key(args.caprivkeypassphrase, 
-        ec.SECP384R1(), 'certificate authority', args.caprivkeyfile)
+        ec.SECP256R1(), 'certificate authority', args.caprivkeyfile)
 
     # Self-sign CA
     subject = issuer = conf.caName
@@ -70,8 +94,12 @@ def create_ca(args, conf):
 
 
 def create_cert(args, conf):
+    if(args.mode == 'ledger'):
+        curve = ec.SECP256K1()
+    else:
+        curve = ec.SECP256R1()
     priv_key_cert = __create_private_key(args.privkeypassphrase, 
-        ec.SECP256R1(), 'attestation certificate', args.privkeyfile)
+        curve, 'attestation certificate', args.privkeyfile)
 
     # Generate CSR
     csr = x509.CertificateSigningRequestBuilder().subject_name(

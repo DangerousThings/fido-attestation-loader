@@ -1,6 +1,6 @@
 from smartcard.System import readers
 from cryptography import x509
-from .certificate import cert_print_info
+from .certificate import cert_print_info, cert_public_bytes_der
 
 
 def list_readers():
@@ -17,7 +17,10 @@ def list_readers():
 def generate_apdus(cert_der, args):
     apdus = []
     # Select the applet
-    apdus.append([0x00, 0xA4, 0x04, 0x00, 0x08, 0xA0, 0x00, 0x00, 0x06, 0x47, 0x2F, 0x00, 0x01])
+    if(args.mode == 'u2f' or args.mode == 'u2fci' or args.mode == 'fido2'):
+        apdus.append([0x00, 0xA4, 0x04, 0x00, 0x08, 0xA0, 0x00, 0x00, 0x06, 0x47, 0x2F, 0x00, 0x01])
+    elif(args.mode == 'ledger'):
+        apdus.append([0x00, 0xA4, 0x04, 0x00, 0x0C, 0xA0, 0x00, 0x00, 0x06, 0x17, 0x00, 0x54, 0xBF, 0x6A, 0xA9, 0x49, 0x01])
     if(args.mode == 'u2f' or args.mode == 'u2fci'):
         # Send the certificate in distinct chunks
         for offset in range(0, len(cert_der), 128):
@@ -32,6 +35,10 @@ def generate_apdus(cert_der, args):
             cla = 0x80
             if(len(cert_der) - offset > 255): cla |= 0x10
             apdus.append([cla, 0x10, 0x00, 0x00, length] + cert_der[offset:(offset + length)])
+    elif(args.mode == 'ledger'):
+        # Send the certificate public key only in one chunk
+        cert = x509.load_der_x509_certificate(cert_der)
+        apdus.append([0xF0, 0x48, 0x00, 0x00, 0x41] + list(cert_public_bytes_der(cert)))
     return apdus
 
 

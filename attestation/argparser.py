@@ -63,7 +63,7 @@ def parse():
     # Mode options
     parser_handle_mode = argparse.ArgumentParser(add_help=False)
     parser_handle_mode.add_argument('-m', '--mode', nargs='?', dest='mode', type=str,
-        const='fido2', default='fido2', choices=['u2f', 'u2fci', 'fido2'], 
+        const='fido2', default='fido2', choices=['u2f', 'u2fci', 'fido2', 'ledger'], 
         help='Applet variant to handle (default: fido2)')
 
     # Interfacing options
@@ -92,12 +92,13 @@ def parse():
     # CERT CREATE action
     parser_cert_create = subparsers_cert.add_parser('create', 
         parents=[parser_handle_settings, parser_handle_cert, parser_handle_cert_pkey,
-            parser_handle_ca, parser_handle_ca_pkey, parser_handle_create], 
+            parser_handle_ca, parser_handle_ca_pkey, parser_handle_create, parser_handle_mode], 
         help='create a new attestation certificate')
     
     # CERT SHOW action
     parser_cert_show = subparsers_cert.add_parser('show', 
-        parents=[parser_handle_settings, parser_handle_cert, parser_handle_ca, parser_handle_cert_pkey, parser_handle_mode], 
+        parents=[parser_handle_settings, parser_handle_cert, parser_handle_cert_pkey, 
+            parser_handle_ca, parser_handle_ca_pkey, parser_handle_mode], 
         help='show details of an existing attestation certificate')
     parser_cert_show.add_argument('-f', '--format', nargs='?', dest='format', type=str,
         const='human', default='human', choices=['human', 'parameter', 'fidesmo', 'metadata'], 
@@ -196,7 +197,7 @@ def validate(parser, args):
                 '\' already exists. Run with \'-o\' to enable overwriting files.')
             exit(1)
 
-    if((args.action == 'cert' and args.verb == 'create') or args.action == 'ca'):
+    if((args.action == 'cert' and (args.verb == 'create' or args.verb == 'show')) or args.action == 'ca'):
         if(os.path.isfile(args.caprivkeypassphrasefile)):
             with open(args.caprivkeypassphrasefile, 'r') as f:
                 args.caprivkeypassphrase = f.read()
@@ -213,7 +214,8 @@ def validate(parser, args):
             else:
                 args.caprivkeypassphrase = pw1 = getpass.getpass('prompt: No passphrase to decrypt the certificate authority ' + 
                     'private key specified, please enter passphrase: ')
-
-        if(args.days < 1):
-            print('error: Certificate validity duration must be at least 1 day.')
-            exit(1)
+                    
+        if(args.verb != 'show'):
+            if(args.days < 1):
+                print('error: Certificate validity duration must be at least 1 day.')
+                exit(1)

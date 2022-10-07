@@ -1,38 +1,46 @@
 import uuid, json, base64
-from cryptography.hazmat.primitives import serialization as ser
+from cryptography.hazmat.primitives import hashes, serialization as ser
+from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography import x509
 import asn1
-from .certificate import fidoAAGUIDExtensionOID, cert_print_info
+from .certificate import fidoAAGUIDExtensionOID, cert_print_info, cert_public_bytes_der, key_private_bytes_der
 from .loader import generate_apdus
 
 
 def show_cert(args, conf):
     with open(args.certfile, 'rb') as f:
         cert_der = f.read()
-    with open(args.cacertfile, 'rb') as f:
-        ca_der = f.read()
     with open(args.privkeyfile, 'rb') as f:
         try:
-            priv_key_der = ser.load_der_private_key(f.read(), 
-                password = args.privkeypassphrase.encode('utf-8')).private_bytes(
-                    ser.Encoding.DER, ser.PrivateFormat.TraditionalOpenSSL, ser.NoEncryption())
+            priv_key = ser.load_der_private_key(f.read(), password = args.privkeypassphrase.encode('utf-8'))
         except ValueError as e:
             print('error: Cannot read private attestation certificate key: ' + str(e))
             exit(1)
-
-    # Extract the DER / ASN1 PKCS#1 encoded private key bytes
-    decoder = asn1.Decoder()
-    decoder.start(priv_key_der)
-    decoder.enter() # SEQUENCE
-    decoder.read() # ecPrivkeyVer1
-    _, priv_key_bytes = decoder.read() # privateKey
+    with open(args.cacertfile, 'rb') as f:
+        ca_der = f.read()
+    with open(args.caprivkeyfile, 'rb') as f:
+        try:
+            priv_key_ca = ser.load_der_private_key(f.read(), password = args.caprivkeypassphrase.encode('utf-8'))
+        except ValueError as e:
+            print('error: Cannot read private certificate authority key: ' + str(e))
+            exit(1)
 
     # Construct installation parameter
     ca = x509.load_der_x509_certificate(ca_der)
     cert = x509.load_der_x509_certificate(cert_der)
     flags = '00'
-    if(args.mode == 'u2fci'): flags = '01'
-    param = flags + f'{len(cert_der):04x}' + priv_key_bytes.hex()
+    if(args.mode == 'u2fci'): 
+        flags = '01'
+    priv_key_bytes = key_private_bytes_der(priv_key)
+    param = priv_key_bytes.hex()
+    if(args.mode == 'u2f' or args.mode == 'u2fci' or args.mode == 'fido2'):
+        param = flags + f'{len(cert_der):04x}' + param
+    elif(args.mode == 'ledger'):
+        # Ledger does not use the x509 signature, but instead signs the raw public key bytes directly
+        public_key_bytes = cert_public_bytes_der(cert)
+        public_key_sign = priv_key_ca.sign(public_key_bytes, ec.ECDSA(hashes.SHA256()))
+        param += f'{len(public_key_sign):04x}' + public_key_sign.hex()
+
     decoder = asn1.Decoder()
     decoder.start(cert.extensions.get_extension_for_oid(fidoAAGUIDExtensionOID).value.value)
     _, aaguid_bytes = decoder.read()
@@ -48,9 +56,12 @@ def show_cert(args, conf):
         print('info: Private attestation key (32 bytes): ' + priv_key_bytes.hex())
         print('info: AAGUID: ' + aaguid)
         if(args.mode == 'u2f' or args.mode == 'u2fci'):
-            print('info: Applet installation parameter (contains private attestation key 32 bytes):')
+            print('info: Applet installation parameter (contains header 3 bytes, private attestation key 32 bytes):')
         elif(args.mode == 'fido2'):
-            print('info: Applet installation parameter (contains private attestation key 32 bytes, AAGUID 16 bytes):')
+            print('info: Applet installation parameter (contains header 3 bytes, private attestation key 32 bytes, AAGUID 16 bytes):')
+        elif(args.mode == 'ledger'):
+            print('info: Applet installation parameter (contains private attestation key 32 bytes, ' +
+                'header 2 bytes, public attestation key signature ' + str(len(cert.signature)) + ' bytes):')
     
     # Print installation parameter
     if(args.format == 'human' or args.format == 'parameter'):
