@@ -104,9 +104,6 @@ def show_cert(args, conf):
     elif(args.format == 'metadata'):
         js = {
             'legalHeader': 'https://fidoalliance.org/metadata/metadata-statement-legal-header/',
-            'attestationCertificateKeyIdentifiers': [
-                (x509.SubjectKeyIdentifier.from_public_key(cert.public_key())).digest.hex()
-            ],
             'description': conf.meta.description,
             'authenticatorVersion': 1,
             'protocolFamily': 'fido2' if (args.mode == 'fido2') else 'u2f',
@@ -130,7 +127,9 @@ def show_cert(args, conf):
                 [
                     {
                         'userVerificationMethod': 'none'
-                    },
+                    }
+                ],
+                [
                     {
                         'userVerificationMethod': 'presence_internal'
                     }
@@ -155,8 +154,41 @@ def show_cert(args, conf):
             ],
             'icon': conf.meta.icon
         }
-        if(args.mode == 'fido2'):
+        if(args.mode == 'u2f'):
+            js['attestationCertificateKeyIdentifiers'] = [
+                (x509.SubjectKeyIdentifier.from_public_key(cert.public_key())).digest.hex()
+            ]
+        elif(args.mode == 'fido2'):
             js['aaguid'] = aaguid
+            js['userVerificationDetails'] += [
+                [
+                    {
+                        'userVerificationMethod': 'passcode_external',
+                        'caDesc': { 
+                            'base': 10,
+                            'minLength': 4,
+                            'maxRetries': 8
+                        }
+                    }
+                ],
+                [
+                    {
+                        'userVerificationMethod': 'passcode_external',
+                        'caDesc': { 
+                            'base': 10,
+                            'minLength': 4,
+                            'maxRetries': 8
+                        }
+                    },
+                    {
+                        'userVerificationMethod': 'presence_internal'
+                    }
+                ]
+            ]
+            js['authenticationAlgorithms'] += [
+                'rsassa_pkcsv15_sha256_raw',
+                'rsassa_pss_sha256_raw'
+            ]
             js['authenticatorGetInfo'] = {
                 'versions': [ 'FIDO_2_0' ],
                 'extensions': [ ],
@@ -164,14 +196,25 @@ def show_cert(args, conf):
                 'options': {
                     'rk': True,
                     'up': True,
-                    'uv': True,
+                    'clientPin': True
                 },
                 'maxMsgSize': 1200,
+                'pinUvAuthProtocols': [
+                    1
+                ],
                 'transports': [ 'nfc' ],
                 'algorithms': [
                     {
                         'type': 'public-key',
                         'alg': -7
+                    },
+                    {
+                        'type': 'public-key',
+                        'alg': -257
+                    },
+                    {
+                        'type': 'public-key',
+                        'alg': -37
                     }
                 ]
             }
