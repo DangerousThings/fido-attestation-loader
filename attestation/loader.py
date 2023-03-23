@@ -17,7 +17,7 @@ def list_readers():
 def generate_apdus(cert_der, args):
     apdus = []
     # Select the applet
-    if(args.mode == 'u2f' or args.mode == 'u2fci' or args.mode == 'fido2'):
+    if(args.mode == 'u2f' or args.mode == 'u2fci' or args.mode == 'fido2' or args.mode == 'fido2ci'):
         apdus.append([0x00, 0xA4, 0x04, 0x00, 0x08, 0xA0, 0x00, 0x00, 0x06, 0x47, 0x2F, 0x00, 0x01])
     elif(args.mode == 'ledger'):
         apdus.append([0x00, 0xA4, 0x04, 0x00, 0x0C, 0xA0, 0x00, 0x00, 0x06, 0x17, 0x00, 0x54, 0xBF, 0x6A, 0xA9, 0x49, 0x01])
@@ -27,7 +27,7 @@ def generate_apdus(cert_der, args):
             length = min(128, len(cert_der) - offset)
             apdus.append([0x80, 0x01] + list(offset.to_bytes(2, byteorder='big')) + 
                 list(length.to_bytes(1, byteorder='big')) + list(cert_der[offset:(offset + length)]))
-    elif(args.mode == 'fido2'):
+    elif(args.mode == 'fido2' or args.mode == 'fido2ci'):
         # Send the certificate as a chained APDU
         cert_der = [0x42] + list(cert_der)
         for offset in range(0, len(cert_der), 255):

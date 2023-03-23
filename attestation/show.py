@@ -31,9 +31,11 @@ def show_cert(args, conf):
     flags = '00'
     if(args.mode == 'u2fci'): 
         flags = '01'
+    if(args.mode == 'fido2ci'): 
+        flags = '03'
     priv_key_bytes = key_private_bytes_der(priv_key)
     param = priv_key_bytes.hex()
-    if(args.mode == 'u2f' or args.mode == 'u2fci' or args.mode == 'fido2'):
+    if(args.mode == 'u2f' or args.mode == 'u2fci' or args.mode == 'fido2' or args.mode == 'fido2ci'):
         param = flags + f'{len(cert_der):04x}' + param
     elif(args.mode == 'ledger'):
         # Ledger does not use the x509 signature, but instead signs the raw public key bytes directly
@@ -44,7 +46,7 @@ def show_cert(args, conf):
     decoder = asn1.Decoder()
     decoder.start(cert.extensions.get_extension_for_oid(fidoAAGUIDExtensionOID).value.value)
     _, aaguid_bytes = decoder.read()
-    if(args.mode == 'fido2'):
+    if(args.mode == 'fido2' or args.mode == 'fido2ci'):
         param += aaguid_bytes.hex()
     aaguid = str(uuid.UUID(bytes=aaguid_bytes))
 
@@ -57,7 +59,7 @@ def show_cert(args, conf):
         print('info: AAGUID: ' + aaguid)
         if(args.mode == 'u2f' or args.mode == 'u2fci'):
             print('info: Applet installation parameter (contains header 3 bytes, private attestation key 32 bytes):')
-        elif(args.mode == 'fido2'):
+        elif(args.mode == 'fido2' or args.mode == 'fido2ci'):
             print('info: Applet installation parameter (contains header 3 bytes, private attestation key 32 bytes, AAGUID 16 bytes):')
         elif(args.mode == 'ledger'):
             print('info: Applet installation parameter (contains private attestation key 32 bytes, ' +
@@ -106,7 +108,7 @@ def show_cert(args, conf):
             'legalHeader': 'https://fidoalliance.org/metadata/metadata-statement-legal-header/',
             'description': conf.meta.description,
             'authenticatorVersion': 1,
-            'protocolFamily': 'fido2' if (args.mode == 'fido2') else 'u2f',
+            'protocolFamily': 'fido2' if (args.mode == 'fido2' or args.mode == 'fido2ci') else 'u2f',
             'schema': 3,
             'upv': [
                 {
@@ -118,7 +120,7 @@ def show_cert(args, conf):
                 'secp256r1_ecdsa_sha256_raw'
             ],
             'publicKeyAlgAndEncodings': [
-                'cose' if (args.mode == 'fido2') else 'ecc_x962_raw'
+                'cose' if (args.mode == 'fido2' or args.mode == 'fido2ci') else 'ecc_x962_raw'
             ],
             'attestationTypes': [
                 'basic_full'
@@ -154,11 +156,11 @@ def show_cert(args, conf):
             ],
             'icon': conf.meta.icon
         }
-        if(args.mode == 'u2f'):
+        if(args.mode == 'u2f' or args.mode == 'u2fci'):
             js['attestationCertificateKeyIdentifiers'] = [
                 (x509.SubjectKeyIdentifier.from_public_key(cert.public_key())).digest.hex()
             ]
-        elif(args.mode == 'fido2'):
+        elif(args.mode == 'fido2' or args.mode == 'fido2ci'):
             js['aaguid'] = aaguid
             js['userVerificationDetails'] += [
                 [
@@ -198,7 +200,7 @@ def show_cert(args, conf):
                     'up': True,
                     'clientPin': True
                 },
-                'maxMsgSize': 1200,
+                'maxMsgSize': 1489,
                 'pinUvAuthProtocols': [
                     1
                 ],

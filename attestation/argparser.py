@@ -63,7 +63,7 @@ def parse():
     # Mode options
     parser_handle_mode = argparse.ArgumentParser(add_help=False)
     parser_handle_mode.add_argument('-m', '--mode', nargs='?', dest='mode', type=str,
-        const='fido2', default='fido2', choices=['u2f', 'u2fci', 'fido2', 'ledger'], 
+        const='fido2', default='fido2', choices=['u2f', 'u2fci', 'fido2', 'fido2ci', 'ledger'], 
         help='Applet variant to handle (default: fido2)')
 
     # Interfacing options
