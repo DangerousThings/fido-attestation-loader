@@ -6,6 +6,8 @@ This tool assumes NFC transport, and sets the FIDO U2F certificate transports ex
 
 The generated certificate authorities and attestation certificates use the `SECP256R1` (CAs and FIDO) or `SECP256K1` (Ledger) elliptic curves.
 
+Note that you have to run the loader as Administator on Windows, because low-level access to FIDO applets is blocked by default.
+
 ## Setup
 
 Install [Python 3](https://www.python.org/downloads/) and Pip (usually packaged with Python), both are probably available via your package manager. Use Pip in the terminal to install the requirements: 
