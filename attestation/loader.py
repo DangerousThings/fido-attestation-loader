@@ -38,6 +38,7 @@ def generate_apdus(cert_der, args):
             # Construct payload
             cert_cbor = list(cbor2.dumps([cert_der]))
             payload = list(aaguid_bytes) + list(len(cert_cbor).to_bytes(2, byteorder='big')) + cert_cbor
+            payload = [0x46] + list(cbor2.dumps({1: bytes(payload)}))
         # Send the payload as a chained APDU
         for offset in range(0, len(payload), 255):
             length = min(255, len(payload) - offset)
