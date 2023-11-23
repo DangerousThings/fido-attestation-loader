@@ -1,6 +1,7 @@
 from smartcard.System import readers
 from cryptography import x509
-from .certificate import cert_print_info, cert_public_bytes_der
+import asn1, cbor2
+from .certificate import fidoAAGUIDExtensionOID, cert_print_info, cert_public_bytes_der
 
 
 def list_readers():
@@ -17,28 +18,32 @@ def list_readers():
 def generate_apdus(cert_der, args):
     apdus = []
     # Select the applet
-    if(args.mode == 'u2f' or args.mode == 'u2fci' or args.mode == 'fido2' or args.mode == 'fido2ci'):
-        apdus.append([0x00, 0xA4, 0x04, 0x00, 0x08, 0xA0, 0x00, 0x00, 0x06, 0x47, 0x2F, 0x00, 0x01])
-    elif(args.mode == 'ledger'):
-        apdus.append([0x00, 0xA4, 0x04, 0x00, 0x0C, 0xA0, 0x00, 0x00, 0x06, 0x17, 0x00, 0x54, 0xBF, 0x6A, 0xA9, 0x49, 0x01])
+    apdus.append([0x00, 0xA4, 0x04, 0x00, 0x08, 0xA0, 0x00, 0x00, 0x06, 0x47, 0x2F, 0x00, 0x01])
     if(args.mode == 'u2f' or args.mode == 'u2fci'):
         # Send the certificate in distinct chunks
         for offset in range(0, len(cert_der), 128):
             length = min(128, len(cert_der) - offset)
             apdus.append([0x80, 0x01] + list(offset.to_bytes(2, byteorder='big')) + 
                 list(length.to_bytes(1, byteorder='big')) + list(cert_der[offset:(offset + length)]))
-    elif(args.mode == 'fido2' or args.mode == 'fido2ci'):
-        # Send the certificate as a chained APDU
-        cert_der = [0x42] + list(cert_der)
-        for offset in range(0, len(cert_der), 255):
-            length = min(255, len(cert_der) - offset)
+    elif(args.mode == 'fido2' or args.mode == 'fido2ci' or args.mode == 'fido21'):
+        if(args.mode == 'fido2' or args.mode == 'fido2ci'):
+            # Payload is just the certificate
+            payload = [0x42] + list(cert_der)
+        elif(args.mode == 'fido21'):
+            # Load AAGUID
+            decoder = asn1.Decoder()
+            cert = x509.load_der_x509_certificate(cert_der)
+            decoder.start(cert.extensions.get_extension_for_oid(fidoAAGUIDExtensionOID).value.value)
+            _, aaguid_bytes = decoder.read()
+            # Construct payload
+            cert_cbor = list(cbor2.dumps([cert_der]))
+            payload = list(aaguid_bytes) + list(len(cert_cbor).to_bytes(2, byteorder='big')) + cert_cbor
+        # Send the payload as a chained APDU
+        for offset in range(0, len(payload), 255):
+            length = min(255, len(payload) - offset)
             cla = 0x80
-            if(len(cert_der) - offset > 255): cla |= 0x10
-            apdus.append([cla, 0x10, 0x00, 0x00, length] + cert_der[offset:(offset + length)])
-    elif(args.mode == 'ledger'):
-        # Send the certificate public key only in one chunk
-        cert = x509.load_der_x509_certificate(cert_der)
-        apdus.append([0xF0, 0x48, 0x00, 0x00, 0x41] + list(cert_public_bytes_der(cert)))
+            if(len(payload) - offset > 255): cla |= 0x10
+            apdus.append([cla, 0x10, 0x00, 0x00, length] + payload[offset:(offset + length)])
     return apdus
 
 

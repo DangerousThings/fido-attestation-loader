@@ -1,10 +1,10 @@
-# FIDO and Ledger Attestation Certificate Loader
+# FIDO Attestation Certificate Loader
 
-Tool to generate certificate authorities and attestation certificates, and deploy them to [vk-u2f](https://github.com/VivoKey/vk-u2f), [u2f-javacard](https://github.com/darconeous/u2f-javacard), [apex-ledger-unplugged](https://github.com/VivoKey/apex-ledger-unplugged) or [Fidesmo](https://fidesmo.com/).
+Tool to generate certificate authorities and attestation certificates, and deploy them to [apex-fido2](https://github.com/VivoKey/apex-fido2), [FIDO2Applet](https://github.com/BryanJacobs/FIDO2Applet), [u2f-javacard](https://github.com/darconeous/u2f-javacard), or [Fidesmo](https://fidesmo.com/).
 
 This tool assumes NFC transport, and sets the FIDO U2F certificate transports extension accordingly.
 
-The generated certificate authorities and attestation certificates use the `SECP256R1` (CAs and FIDO) or `SECP256K1` (Ledger) elliptic curves.
+The generated certificate authorities and attestation certificates use the `SECP256R1` elliptic curve.
 
 Note that you have to run the loader as Administator on Windows, because low-level access to FIDO applets is blocked by default.
 
@@ -128,8 +128,8 @@ options:
                         Print the complete help documentation
   -l, --list-readers    list available PC/SC readers
 
-usage: attestation.py ca create [-h] [-s [SETTINGS]] [-cac [CACERTFILE]] [-cak [CAPRIVKEYFILE]] [-cap [CAPRIVKEYPASSPHRASE]] [-capf [CAPRIVKEYPASSPHRASEFILE]] [-d [DAYS]]
-                                [-o | --overwrite | --no-overwrite]
+usage: attestation.py ca create [-h] [-s [SETTINGS]] [-cac [CACERTFILE]] [-cak [CAPRIVKEYFILE]] [-cap [CAPRIVKEYPASSPHRASE]] [-capf [CAPRIVKEYPASSPHRASEFILE]]
+                                [-d [DAYS]] [-o | --overwrite | --no-overwrite]
 
 options:
   -h, --help            show this help message and exit
@@ -148,9 +148,9 @@ options:
   -o, --overwrite, --no-overwrite
                         allow overwriting existing files (default: False)
 
-usage: attestation.py cert create [-h] [-s [SETTINGS]] [-c [CERTFILE]] [-k [PRIVKEYFILE]] [-p [PRIVKEYPASSPHRASE]] [-pf [PRIVKEYPASSPHRASEFILE]] [-cac [CACERTFILE]]
-                                  [-cak [CAPRIVKEYFILE]] [-cap [CAPRIVKEYPASSPHRASE]] [-capf [CAPRIVKEYPASSPHRASEFILE]] [-d [DAYS]] [-o | --overwrite | --no-overwrite]
-                                  [-m [{u2f,u2fci,fido2,fido2ci,ledger}]]
+usage: attestation.py cert create [-h] [-s [SETTINGS]] [-c [CERTFILE]] [-k [PRIVKEYFILE]] [-p [PRIVKEYPASSPHRASE]] [-pf [PRIVKEYPASSPHRASEFILE]]
+                                  [-cac [CACERTFILE]] [-cak [CAPRIVKEYFILE]] [-cap [CAPRIVKEYPASSPHRASE]] [-capf [CAPRIVKEYPASSPHRASEFILE]] [-d [DAYS]]
+                                  [-o | --overwrite | --no-overwrite] [-m [{u2f,u2fci,fido2,fido2ci,fido21}]]
 
 options:
   -h, --help            show this help message and exit
@@ -176,11 +176,11 @@ options:
                         certificate authority validity duration in days (default: 3652 = 10 years)
   -o, --overwrite, --no-overwrite
                         allow overwriting existing files (default: False)
-  -m [{u2f,u2fci,fido2,fido2ci,ledger}], --mode [{u2f,u2fci,fido2,fido2ci,ledger}]
+  -m [{u2f,u2fci,fido2,fido2ci,fido21}], --mode [{u2f,u2fci,fido2,fido2ci,fido21}]
                         Applet variant to handle (default: fido2)
 
 usage: attestation.py cert show [-h] [-s [SETTINGS]] [-c [CERTFILE]] [-k [PRIVKEYFILE]] [-p [PRIVKEYPASSPHRASE]] [-pf [PRIVKEYPASSPHRASEFILE]] [-cac [CACERTFILE]]
-                                [-cak [CAPRIVKEYFILE]] [-cap [CAPRIVKEYPASSPHRASE]] [-capf [CAPRIVKEYPASSPHRASEFILE]] [-m [{u2f,u2fci,fido2,fido2ci,ledger}]]
+                                [-cak [CAPRIVKEYFILE]] [-cap [CAPRIVKEYPASSPHRASE]] [-capf [CAPRIVKEYPASSPHRASEFILE]] [-m [{u2f,u2fci,fido2,fido2ci,fido21}]]
                                 [-f [{human,parameter,fidesmo,metadata}]]
 
 options:
@@ -203,7 +203,7 @@ options:
                         passphrase to de/encrypt the private certificate authority key
   -capf [CAPRIVKEYPASSPHRASEFILE], --certificate-authority-key-passphrase-file [CAPRIVKEYPASSPHRASEFILE]
                         file that contains the passphrase to de/encrypt the private certificate authority key (default: ca_key.pass)
-  -m [{u2f,u2fci,fido2,fido2ci,ledger}], --mode [{u2f,u2fci,fido2,fido2ci,ledger}]
+  -m [{u2f,u2fci,fido2,fido2ci,fido21}], --mode [{u2f,u2fci,fido2,fido2ci,fido21}]
                         Applet variant to handle (default: fido2)
   -f [{human,parameter,fidesmo,metadata}], --format [{human,parameter,fidesmo,metadata}]
                         Format of the certificate to display
@@ -219,7 +219,8 @@ options:
   -cac [CACERTFILE], --certificate-authority [CACERTFILE]
                         filename of the public certificate authority certificate (default: ca.der)
 
-usage: attestation.py cert upload [-h] [-s [SETTINGS]] [-c [CERTFILE]] [-r [READER]] [-m [{u2f,u2fci,fido2,fido2ci,ledger}]] [-lo | --log--apdus-only | --no-log--apdus-only]
+usage: attestation.py cert upload [-h] [-s [SETTINGS]] [-c [CERTFILE]] [-r [READER]] [-m [{u2f,u2fci,fido2,fido2ci,fido21}]]
+                                  [-lo | --log--apdus-only | --no-log--apdus-only]
 
 options:
   -h, --help            show this help message and exit
@@ -229,7 +230,7 @@ options:
                         filename of the public attestation certificate (default: attestation.der)
   -r [READER], --reader [READER]
                         index of the PC/SC reader to use (default: 0)
-  -m [{u2f,u2fci,fido2,fido2ci,ledger}], --mode [{u2f,u2fci,fido2,fido2ci,ledger}]
+  -m [{u2f,u2fci,fido2,fido2ci,fido21}], --mode [{u2f,u2fci,fido2,fido2ci,fido21}]
                         Applet variant to handle (default: fido2)
   -lo, --log--apdus-only, --no-log--apdus-only
                         only display APDUs without sending (default: False)

@@ -1,4 +1,4 @@
-import uuid, json, base64
+import uuid, json, base64, cbor2
 from cryptography.hazmat.primitives import hashes, serialization as ser
 from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography import x509
@@ -18,30 +18,37 @@ def show_cert(args, conf):
             exit(1)
     with open(args.cacertfile, 'rb') as f:
         ca_der = f.read()
-    with open(args.caprivkeyfile, 'rb') as f:
-        try:
-            priv_key_ca = ser.load_der_private_key(f.read(), password = args.caprivkeypassphrase.encode('utf-8'))
-        except ValueError as e:
-            print('error: Cannot read private certificate authority key: ' + str(e))
-            exit(1)
 
     # Construct installation parameter
     ca = x509.load_der_x509_certificate(ca_der)
     cert = x509.load_der_x509_certificate(cert_der)
-    flags = '00'
-    if(args.mode == 'u2fci'): 
-        flags = '01'
-    if(args.mode == 'fido2ci'): 
-        flags = '03'
     priv_key_bytes = key_private_bytes_der(priv_key)
-    param = priv_key_bytes.hex()
-    if(args.mode == 'u2f' or args.mode == 'u2fci' or args.mode == 'fido2' or args.mode == 'fido2ci'):
-        param = flags + f'{len(cert_der):04x}' + param
-    elif(args.mode == 'ledger'):
-        # Ledger does not use the x509 signature, but instead signs the raw public key bytes directly
-        public_key_bytes = cert_public_bytes_der(cert)
-        public_key_sign = priv_key_ca.sign(public_key_bytes, ec.ECDSA(hashes.SHA256()))
-        param += f'{len(public_key_sign):04x}' + public_key_sign.hex()
+    if(args.mode != 'fido21'):
+        flags = '00'
+        if(args.mode == 'u2fci'): 
+            flags = '01'
+        if(args.mode == 'fido2ci'): 
+            flags = '03'
+        param = flags + f'{len(cert_der):04x}' + priv_key_bytes.hex()
+    else:
+        param = cbor2.dumps({
+            0: True, # enable_attestation
+            1: False, # high_security
+            2: False, # force_always_uv
+            3: False, # high_security_rks
+            4: True, # protect_against_reset
+            5: 5, # kdf_iterations
+            6: 32, # max_cred_blob_len
+            7: 1024, # large_blob_store_size
+            8: 32, # max_rk_rp_length
+            9: 254, # max_ram_scratch
+            10: 1024, # buffer_mem
+            11: 1024, # flash_scratch
+            12: False, # do_not_store_pin_length
+            13: False, # cache_pin_token
+            14: 1, # certification_level
+            15: priv_key_bytes # attestation_private_key
+        }, canonical=True).hex()
 
     decoder = asn1.Decoder()
     decoder.start(cert.extensions.get_extension_for_oid(fidoAAGUIDExtensionOID).value.value)
@@ -61,9 +68,8 @@ def show_cert(args, conf):
             print('info: Applet installation parameter (contains header 3 bytes, private attestation key 32 bytes):')
         elif(args.mode == 'fido2' or args.mode == 'fido2ci'):
             print('info: Applet installation parameter (contains header 3 bytes, private attestation key 32 bytes, AAGUID 16 bytes):')
-        elif(args.mode == 'ledger'):
-            print('info: Applet installation parameter (contains private attestation key 32 bytes, ' +
-                'header 2 bytes, public attestation key signature ' + str(len(cert.signature)) + ' bytes):')
+        elif(args.mode == 'fido21' or args.mode == 'fido2ci'):
+            print('info: Applet installation parameter (contains CBOR configuration map with private attestation key 32 bytes):')
     
     # Print installation parameter
     if(args.format == 'human' or args.format == 'parameter'):
@@ -105,22 +111,16 @@ def show_cert(args, conf):
         print(serialized)
     elif(args.format == 'metadata'):
         js = {
-            'legalHeader': 'https://fidoalliance.org/metadata/metadata-statement-legal-header/',
+            'legalHeader': 'https:#fidoalliance.org/metadata/metadata-statement-legal-header/',
             'description': conf.meta.description,
             'authenticatorVersion': 1,
-            'protocolFamily': 'fido2' if (args.mode == 'fido2' or args.mode == 'fido2ci') else 'u2f',
+            'protocolFamily': 'fido2' if (args.mode == 'fido2' or args.mode == 'fido2ci' or args.mode == 'fido21') else 'u2f',
             'schema': 3,
-            'upv': [
-                {
-                    'major': 1,
-                    'minor': 0
-                }
-            ],
             'authenticationAlgorithms': [
-                'secp256r1_ecdsa_sha256_raw'
+                'secp256r1_ecdsa_sha256_raw' if (args.mode != 'fido21') else 'secp256r1_ecdsa_sha256_der'
             ],
             'publicKeyAlgAndEncodings': [
-                'cose' if (args.mode == 'fido2' or args.mode == 'fido2ci') else 'ecc_x962_raw'
+                'cose' if (args.mode == 'fido2' or args.mode == 'fido2ci' or args.mode == 'fido21') else 'ecc_x962_raw'
             ],
             'attestationTypes': [
                 'basic_full'
@@ -150,17 +150,38 @@ def show_cert(args, conf):
                 'wireless',
                 'nfc'
             ],
+            'isFreshUserVerificationRequired': True,
             'tcDisplay': [ ],
+            "supportedExtensions": [ ],
             'attestationRootCertificates': [
                 base64.b64encode(ca_der).decode('ASCII')
             ],
             'icon': conf.meta.icon
         }
         if(args.mode == 'u2f' or args.mode == 'u2fci'):
+            js['upv'] = [
+                {
+                    'major': 1,
+                    'minor': 2
+                }
+            ]
             js['attestationCertificateKeyIdentifiers'] = [
                 (x509.SubjectKeyIdentifier.from_public_key(cert.public_key())).digest.hex()
             ]
-        elif(args.mode == 'fido2' or args.mode == 'fido2ci'):
+        elif(args.mode == 'fido2' or args.mode == 'fido2ci' or args.mode == 'fido21'):
+            js['upv'] = [
+                {
+                    'major': 1,
+                    'minor': 0
+                }
+            ]
+            if(args.mode == 'fido21'):
+                js['upv'] += [
+                {
+                    'major': 1,
+                    'minor': 1
+                }
+            ]
             js['aaguid'] = aaguid
             js['userVerificationDetails'] += [
                 [
@@ -187,38 +208,11 @@ def show_cert(args, conf):
                     }
                 ]
             ]
-            js['authenticationAlgorithms'] += [
-                'rsassa_pkcsv15_sha256_raw',
-                'rsassa_pss_sha256_raw'
-            ]
-            js['authenticatorGetInfo'] = {
-                'versions': [ 'FIDO_2_0' ],
-                'extensions': [ ],
-                'aaguid': aaguid_bytes.hex(),
-                'options': {
-                    'rk': True,
-                    'up': True,
-                    'clientPin': True
-                },
-                'maxMsgSize': 1489,
-                'pinUvAuthProtocols': [
-                    1
-                ],
-                'transports': [ 'nfc' ],
-                'algorithms': [
-                    {
-                        'type': 'public-key',
-                        'alg': -7
-                    },
-                    {
-                        'type': 'public-key',
-                        'alg': -257
-                    },
-                    {
-                        'type': 'public-key',
-                        'alg': -37
-                    }
+            if(args.mode == 'fido2' or args.mode == 'fido2ci'):
+                js['authenticationAlgorithms'] += [
+                    'rsassa_pkcsv15_sha256_raw',
+                    'rsassa_pss_sha256_raw'
                 ]
-            }
+            js['authenticatorGetInfo'] = {}
         serialized = json.dumps(js, sort_keys=False, indent=2)
         print(serialized)

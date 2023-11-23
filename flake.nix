@@ -18,6 +18,7 @@
               cryptography
               asn1
               pyscard
+              cbor2
             ]))
           ];
         };

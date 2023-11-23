@@ -94,10 +94,7 @@ def create_ca(args, conf):
 
 
 def create_cert(args, conf):
-    if(args.mode == 'ledger'):
-        curve = ec.SECP256K1()
-    else:
-        curve = ec.SECP256R1()
+    curve = ec.SECP256R1()
     priv_key_cert = __create_private_key(args.privkeypassphrase, 
         curve, 'attestation certificate', args.privkeyfile)
 
