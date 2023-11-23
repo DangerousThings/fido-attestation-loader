@@ -33,9 +33,6 @@ def show_cert(args, conf):
     else:
         param = cbor2.dumps({
             0: True, # enable_attestation
-            1: False, # high_security
-            2: False, # force_always_uv
-            3: False, # high_security_rks
             4: True, # protect_against_reset
             5: 5, # kdf_iterations
             6: 32, # max_cred_blob_len
@@ -44,11 +41,8 @@ def show_cert(args, conf):
             9: 254, # max_ram_scratch
             10: 1024, # buffer_mem
             11: 1024, # flash_scratch
-            12: False, # do_not_store_pin_length
-            13: False, # cache_pin_token
-            14: 1, # certification_level
             15: priv_key_bytes # attestation_private_key
-        }, canonical=True).hex()
+        }).hex()
 
     decoder = asn1.Decoder()
     decoder.start(cert.extensions.get_extension_for_oid(fidoAAGUIDExtensionOID).value.value)
