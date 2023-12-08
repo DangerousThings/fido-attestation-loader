@@ -77,7 +77,7 @@ def upload_cert(args):
         data, sw1, sw2 = connection.transmit(apdu)
         if(sw1 == 0x90 and sw2 == 0x00):
             print('success: APDU ' + str(i + 1) + '/' + str(len(apdus)) +
-                ' (' + str(len(apdu)) + ' bytes) transferred, card response is ok')
+                ' (' + str(len(apdu)) + ' bytes) transferred, card response: ' + bytes(data).hex() + ' ' + f'{sw1:02x}' + ' ' + f'{sw2:02x}')
         else:
             print('error: Card response: ' + f'{sw1:02x}' + ' ' + f'{sw2:02x}, aborting upload')
             connection.disconnect()
