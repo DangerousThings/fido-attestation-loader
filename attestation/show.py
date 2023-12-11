@@ -111,7 +111,7 @@ def show_cert(args, conf):
             'protocolFamily': 'fido2' if (args.mode == 'fido2' or args.mode == 'fido2ci' or args.mode == 'fido21') else 'u2f',
             'schema': 3,
             'authenticationAlgorithms': [
-                'secp256r1_ecdsa_sha256_raw' if (args.mode != 'fido21') else 'secp256r1_ecdsa_sha256_der'
+                'secp256r1_ecdsa_sha256_raw'
             ],
             'publicKeyAlgAndEncodings': [
                 'cose' if (args.mode == 'fido2' or args.mode == 'fido2ci' or args.mode == 'fido21') else 'ecc_x962_raw'
