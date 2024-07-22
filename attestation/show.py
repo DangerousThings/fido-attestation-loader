@@ -41,7 +41,10 @@ def show_cert(args, conf):
             9: 254, # max_ram_scratch
             10: 1024, # buffer_mem
             11: 1024, # flash_scratch
-            15: priv_key_bytes # attestation_private_key
+            13: False, # one_use_per_pin_token
+            #14: 1, # certification_level
+            15: priv_key_bytes, # attestation_private_key
+            16: False # writes_invalidate_pins
         }).hex()
 
     decoder = asn1.Decoder()
