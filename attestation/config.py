@@ -77,7 +77,8 @@ def parse(args):
             aaguid = aaguid,
             aaguidExt = x509.UnrecognizedExtension(fidoAAGUIDExtensionOID, aaguid_bin),
             oidExt = x509.UnrecognizedExtension(x509.ObjectIdentifier(config.get('fido2', 'devns', fallback='1.3.6.1.4.1.0.2')), 
-                config.get('fido2', 'devid', fallback='1.3.6.1.4.1.0.1.1').encode('ASCII'))
+                config.get('fido2', 'devid', fallback='1.3.6.1.4.1.0.1.1').encode('ASCII')) if( \
+                    ('fido2' in config and 'devns' in config['fido2'] and 'devid' in config['fido2'])) else None
         ),
         fidesmo = FidesmoConfig(
             title = config.get('fidesmo', 'title', fallback='Generic FIDO'),
