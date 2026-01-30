@@ -1,6 +1,9 @@
 # FIDO Attestation Certificate Loader
 
-Tool to generate certificate authorities and attestation certificates, and deploy them to [apex-fido2](https://github.com/VivoKey/apex-fido2), [FIDO2Applet](https://github.com/BryanJacobs/FIDO2Applet), [u2f-javacard](https://github.com/darconeous/u2f-javacard), or [Fidesmo](https://fidesmo.com/).
+Tool to generate certificate authorities and attestation certificates, and deploy them to [Fidesmo](https://fidesmo.com/) or
+- [apex-fido2](https://github.com/VivoKey/apex-fido2): Use flag `-m fido2`, default
+- [FIDO2Applet](https://github.com/BryanJacobs/FIDO2Applet): Use flag `-m fido21`
+- [u2f-javacard](https://github.com/darconeous/u2f-javacard): Use flag `-m u2f`
 
 This tool assumes NFC transport, and sets the FIDO U2F certificate transports extension accordingly.
 
